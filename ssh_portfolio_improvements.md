@@ -1,153 +1,168 @@
 # SSH TUI Portfolio — Improvement Tracker
-
-**4** Critical fixes · **6** UI polish · **5** Content gaps · **6** Backend ideas
-
----
-
-## Critical Fixes
-
-### 🔴 Splash name truncated — "D" looks broken
-The ASCII banner shows "MOHITH AKSHAY D" but the last initial renders as a lone, half-formed glyph. Either include your full surname "DUGGIRALA" (sized down) or drop the initial entirely. A clean two-line splash is better than a cut-off three-liner.
-
-```
-Option: bigletters.SetFont(...) with smaller font size for full surname
-```
+> Last updated: 2026-05-05
 
 ---
 
-### ~~🔴 Typo in resume PDF URL — "portflio"~~
-> **Resolved** — URL matches actual repo name `portflio`. No action needed.
+## ✅ Completed
+
+| # | Item | Notes |
+|---|------|-------|
+| 1 | **SSH host key fix** | Key generated at Docker build time — no more connection reset |
+| 2 | **Truecolor fix** | SSH session renderer (`bubbletea.MakeRenderer`) passed to all views — colors now work |
+| 3 | **Resume tab removed** | Decision made — content absorbed into About |
+| 4 | **Experience timeline in About** | ISRO, Webcraft Studios, SnuqSq now with full bullet detail |
+| 5 | **Skills in About** | Re-added after Resume tab removal (AI/ML, Languages, Web, Tools) |
+| 6 | **PDF download link** | In About page footer → GitHub raw URL |
+| 7 | **EmbedGen added as Project #1** | PyTorch · LoRA · GGUF · CUDA — `[WIP]` badge |
+| 8 | **Trading System added** | Alpaca API · SQLite · Oracle Cloud — `[Live]` badge |
+| 9 | **ARAK added** | React · Firebase · TypeScript — `[Live]` badge |
+| 10 | **SSH Portfolio added** | Go · Docker · Railway — `[Live]` badge |
+| 11 | **Status badges** | `[Live]` `[WIP]` `[Research]` per project |
+| 12 | **Color-coded tags** | Cyan=language, Magenta=ML/AI, Green=cloud, Orange=DB, Purple=framework |
+| 13 | **GitHub links in Projects** | Shown in expanded project view |
+| 14 | **"Things I've built"** | Subtitle changed from "shipped" to honest framing |
+| 15 | **Banner "D" fix** | Removed lone broken glyph → `· D U G G I R A L A ·` subtitle |
+| 16 | **Tab highlight** | Active tab: cyan background + dark text (inverted, clearly visible) |
+| 17 | **ASCII contacts** | `(@)` `(~)` `(in)` `(gh)` — cross-platform safe |
+| 18 | **Specific interests** | About page mentions ISRO, trading system, SSH portfolio by name |
+| 19 | **Health check** | HTTP server on `:8080` → `/health` returns `200 OK` for Railway |
+| 20 | **Duplicate skills** | Resolved — only in About now |
+| 21 | **GitHub push** | All code live at `github.com/Trafalgar-2006/portflio` |
+| 22 | **Railway deployment** | Auto-deploys on every push to master |
 
 ---
 
-### 🔴 No interactive project drill-down
-Pressing Enter on a project in the list does nothing (or isn't shown). This is the most expected interaction — recruiter selects a project, expects to see a detail view with GitHub link, live demo URL, longer description. Right now it's just a list.
-
-```
-Add ProjectDetail view: description, links, stack, status (Live / WIP)
-```
+## 🔧 In Progress / Pending
 
 ---
 
-### ~~🔴 Resume and About sections duplicate skills~~
-> **Resolved** — Resume tab removed entirely. Skills now live only in About.
+### 🔴 UptimeRobot Keep-Alive (DO THIS NOW)
+Railway Hobby plan sleeps containers after inactivity. Without this, first-time visitors wait 10+ seconds.
+
+**Setup (5 min, free):**
+1. Go to **https://uptimerobot.com** → Sign up free
+2. Click **Add New Monitor**
+3. Monitor Type: **TCP Port**
+4. Friendly Name: `SSH Portfolio`
+5. Hostname: `trolley.proxy.rlwy.net`
+6. Port: `23115`
+7. Monitoring Interval: **5 minutes**
+8. Click **Create Monitor** ✅
+
+> Also add an HTTP monitor for the health check:
+> - Type: HTTP(s)
+> - URL: `http://portflio-production.up.railway.app/health`
+> - Interval: 5 min
 
 ---
 
-### ~~🔴 No loading/error state for SSH connection drops~~
-> **Deferred** — Railway keep-alive via UptimeRobot reduces cold-starts significantly.
+### 🟡 Typewriter Animation on Intro Screen
+Reveal the name banner line-by-line when a visitor first connects. Makes the first impression memorable.
 
----
+**Implementation plan:**
+```go
+// In model.go — add to Model struct:
+revealIdx int  // how many banner lines to show
+animDone  bool // true once fully revealed
 
-## UI / UX
+// Init() → start ticker:
+func (m Model) Init() tea.Cmd {
+    return tea.Tick(time.Millisecond*55, func(t time.Time) tea.Msg {
+        return tickMsg(t)
+    })
+}
 
-### 🟡 Add a subtle animated intro sequence
-Right now the splash loads instantly. A typewriter effect on your name (character-by-character) or a fade-in on the ASCII art would make the first impression far more memorable. Bubbletea supports tickers and viewport updates — use them.
+// Update() → handle tick:
+case tickMsg:
+    if m.revealIdx < totalBannerLines {
+        m.revealIdx++
+        return m, tea.Tick(55ms, ...)
+    }
+    m.animDone = true
+    return m, nil
 
-```
-tea.Tick(50ms) → reveal rune-by-rune on the banner
-```
-
----
-
-### 🟡 Navigation tab highlight is too subtle
-The active tab uses a diamond prefix. It's easy to miss at a glance. Consider inverting the background — highlight color background with dark text — so the active tab is immediately obvious, especially on terminals with non-default color schemes.
-
----
-
-### 🟡 Skill tags on projects feel flat — add color coding
-All stack tags like `[React]` `[Python]` `[Go]` render in the same color. Color-coding by category (language = cyan, framework = yellow, cloud = green) would make the skill spread scannable at a glance without reading each tag.
-
----
-
-### 🟢 Contacts page emoji icons render inconsistently
-The emoji icons (📧 🌐 💼 🔔) before each contact entry look different on Windows Terminal vs macOS Terminal vs Linux. Use pure-ASCII alternatives (`@` for email, `>` for links) or Nerd Font glyphs with a fallback for consistent cross-platform rendering.
-
----
-
-### 🟢 Footer "esc to go back" hint is inconsistent
-Some views show it, some don't. Also on the main nav, the hint says "q to quit" but nowhere explains that arrow keys also change tabs. Standardize hints across all views and add a persistent one-liner at the very bottom of every screen.
-
----
-
-### 🟢 Add a visitor counter easter egg
-A small "You are visitor #N" counter displayed on the splash or contacts page would be a fun nerd detail that also proves the app is live and seeing real traffic. Store count in a simple file or Redis on Railway.
-
----
-
-## Content
-
-### ~~🔴 Resume tab removed — decided~~
-> **Decision** — Resume tab dropped. Experience timeline and skills absorbed into About. PDF download link added to About page footer. EmbedGen remains prominently in Projects as #1.
-
----
-
-### ~~🔴 EmbedGen project missing from the list~~
-> **Resolved** — EmbedGen is now Project #1 in the Projects tab.
-
----
-
-### 🟡 "Shipped" framing is overused and weakened
-"Things I've built and shipped" sets a high bar. Frog Call Classifier and some others are research/course projects, not deployed products. Either change the section subtitle to "Things I've built" or add a `[Live]` / `[Research]` / `[WIP]` status badge per project so the distinction is honest and clear.
-
----
-
-### 🟡 No GitHub links on any project
-Every project should have a clickable GitHub URL in its detail view. Recruiters expect this. It's also how they verify the claims you make about accuracy metrics and real-time performance figures.
-
----
-
-### 🟢 About page "Interests" blurb is generic
-"Building products that bridge the gap between research and real-world deployment" reads like every other ML engineer's bio. Make it specific: mention ISRO, the trading system, the SSH portfolio itself as proof of those interests rather than just stating them.
-
----
-
-## Backend & Infra
-
-### 🔴 Railway free tier will sleep — add a keep-alive ping
-Railway's Hobby plan puts containers to sleep after inactivity. Add a simple cron job (or UptimeRobot free tier) that pings your SSH port every 5 minutes to prevent cold starts. Nobody wants to wait 10 seconds for the TUI to wake up.
-
-```
-UptimeRobot → TCP monitor → trolley.proxy.rlwy.net:23115
+// RenderHome() → pass revealIdx:
+for i, line := range nameBanner {
+    if i < revealIdx {
+        rightCol.WriteString(cyanStyle.Render(line) + "\n")
+    } else {
+        rightCol.WriteString("\n") // hold space
+    }
+}
 ```
 
----
-
-### 🔴 No persistent visitor/analytics log
-You have zero visibility into who's connecting, from where, how long they stay, which sections they visit. Add a lightweight SQLite-backed logger inside the Go app — log timestamp, section visited, session duration. Gives you real interview talking points ("500 unique visitors in 2 weeks").
-
-```
-charm/wish middleware → log session events to SQLite on Railway volume
-```
+**Estimated effort:** ~1 hour · High visual impact
 
 ---
 
-### 🟡 Add SSH key-based auth for a secret admin view
-Public visitors get the portfolio. If your own SSH key is detected, you get an extra admin panel showing visitor stats, session logs, and a live "update content" mode. This is a genuinely impressive feature that shows you understand SSH auth primitives.
-
-```
-wish.WithPublicKeyAuth() → check key fingerprint → route to AdminModel
-```
-
----
-
-### 🟡 Content is hardcoded — move to a config file
-Projects, bio, contacts are all compiled into the binary. Every update requires a rebuild and redeploy. Move content to a YAML or JSON file loaded at startup — Railway volumes can persist it. Now you can update your portfolio without touching Go code.
-
-```
-embed config.yaml → viper or plain encoding/yaml → hot-reload on SIGHUP
-```
-
----
-
-### 🟢 No health check endpoint for Railway
-Railway needs an HTTP health check to know the container is healthy. Spin up a minimal `net/http` server on a second port (e.g. 8080) that just returns `200 OK`. Without it, Railway can't distinguish a healthy app from a crashed one.
+### 🟡 SSH Key Admin View
+If your own SSH public key connects, route to a secret admin panel showing session stats.
 
 ```go
-go func() { http.ListenAndServe(":8080", healthHandler) }()
+wish.WithPublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
+    return wish.KeysEqual(key, adminKey)
+}) → route to AdminModel
 ```
+
+**Estimated effort:** Half a day · Very impressive for interviews
 
 ---
 
-### 💡 Add a live "guestbook" section
-Let visitors leave a short note (name + one line) that's visible to the next visitor. Stored in SQLite. Shows up as a scrollable list in a new Guestbook tab. It's the kind of delightful detail that makes people share the project link — perfect for virality on Twitter/X and LinkedIn.
+### 🟡 SQLite Visitor Analytics
+Log every session: timestamp, IP, sections visited, duration. Zero infra cost on Railway volume.
+
+```go
+// wish middleware
+func analyticsMiddleware(next ssh.Handler) ssh.Handler {
+    return func(s ssh.Session) {
+        start := time.Now()
+        next(s)
+        logSession(s.RemoteAddr(), time.Since(start))
+    }
+}
+```
+Output: `"500 unique visitors in 2 weeks"` → great talking point.
+
+**Estimated effort:** ~2 hours
+
+---
+
+### 🟡 YAML Content Config
+Projects and bio are hardcoded — every update = rebuild + redeploy. Move to `content.yaml`.
+
+```yaml
+projects:
+  - title: EmbedGen
+    status: WIP
+    github: github.com/trafalgar-2006/EmbedGen
+    tags: [Python, PyTorch, LoRA]
+```
+
+**Estimated effort:** ~2 hours · Makes the portfolio self-serve
+
+---
+
+### 🟢 Visitor Counter Easter Egg
+"You are visitor #N" on the splash screen. Stored in a flat file or SQLite.
+Easy win once analytics middleware is in place.
+
+---
+
+### 💡 Guestbook Tab
+Let visitors leave a one-liner. Stored in SQLite, visible to the next visitor.
+Viral potential — people share things that have their name in them.
+
+---
+
+## 📊 Status Summary
+
+```
+Total items:     22 done · 7 remaining
+Colors working:  ✅ (SSH session renderer)
+Live URL:        ssh trolley.proxy.rlwy.net -p 23115
+GitHub:          github.com/Trafalgar-2006/portflio
+Auto-deploy:     ✅ Railway (pushes to master trigger rebuild)
+Health check:    ✅ http://portflio-production.up.railway.app/health
+Keep-alive:      ⏳ UptimeRobot not set up yet
+Animation:       ⏳ Not implemented yet
+```
