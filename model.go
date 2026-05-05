@@ -16,7 +16,8 @@ import (
 type View int
 
 const (
-	ViewBoot View = iota
+	ViewMatrix View = iota // NEW: matrix rain pre-splash
+	ViewBoot
 	ViewAlert
 	ViewHome
 	ViewProjects
@@ -41,10 +42,18 @@ type Model struct {
 	quitting  bool
 	tickCount int
 
+	// Matrix rain animation (pre-boot)
+	matrixCols    []views.MatrixColumn
+	matrixLocked  map[[2]int]rune // cells permanently locked to name chars
+	matrixPending [][2]int        // cells not yet locked
+	matrixPhase   int             // 0=rain, 1=locking, 2=fade
+	matrixNameX   int
+	matrixNameY   int
+
 	// Boot animation
 	bootLines    []views.BootLine
-	bootSchedule []int // tick number when each line should appear
-	bootVisible  int   // how many lines currently shown
+	bootSchedule []int
+	bootVisible  int
 
 	// Alert animation
 	alertPhase     int // 0=warning, 1=just kidding
@@ -87,22 +96,38 @@ func NewModel(r *lipgloss.Renderer) Model {
 		r = lipgloss.DefaultRenderer()
 	}
 	lines := views.NewBootSequence()
-	// Pre-compute the tick at which each line should appear
 	schedule := make([]int, len(lines))
 	t := 0
 	for i, l := range lines {
 		schedule[i] = t
 		t += l.DelayTicks
 	}
+
+	// Matrix: initialise with default terminal size; resized on first WindowSizeMsg
+	w, h := 80, 24
+	nameX, nameY := views.MatrixNameOrigin(w, h)
+	allCells := views.ComputeNameCells(nameX, nameY, views.NameBannerLines())
+	pending := make([][2]int, 0, len(allCells))
+	for pos := range allCells {
+		pending = append(pending, pos)
+	}
+	// Shuffle pending so cells lock in random order
+	rand.Shuffle(len(pending), func(i, j int) { pending[i], pending[j] = pending[j], pending[i] })
+
 	return Model{
 		renderer:     r,
-		width:        80,
-		height:       40,
-		currentView:  ViewBoot,
+		width:        w,
+		height:       h,
+		currentView:  ViewMatrix,
+		matrixCols:   views.NewMatrixColumns(w, h),
+		matrixLocked: make(map[[2]int]rune),
+		matrixPending: pending,
+		matrixNameX:  nameX,
+		matrixNameY:  nameY,
 		bootLines:    lines,
 		bootSchedule: schedule,
 		bootVisible:  0,
-		cursorLeft:   6, // blink 3 times (on+off = 2 per cycle * 3)
+		cursorLeft:   6,
 	}
 }
 
@@ -223,6 +248,36 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tickCmd()
 		}
 
+		// ── Matrix rain ────────────────────────────────────────────
+		if m.currentView == ViewMatrix {
+			// Tick matrix every 2 ticks (~10fps) for SSH efficiency
+			if m.tickCount%2 == 0 {
+				m.matrixCols = views.TickMatrixColumns(m.matrixCols, m.height)
+			}
+			// Phase 0 → 1 after 40 ticks (2s)
+			if m.matrixPhase == 0 && m.tickCount >= 40 {
+				m.matrixPhase = 1
+			}
+			// Phase 1: lock 6 random cells per tick
+			if m.matrixPhase == 1 {
+				allCells := views.ComputeNameCells(m.matrixNameX, m.matrixNameY, views.NameBannerLines())
+				for i := 0; i < 6 && len(m.matrixPending) > 0; i++ {
+					pos := m.matrixPending[0]
+					m.matrixPending = m.matrixPending[1:]
+					m.matrixLocked[pos] = allCells[pos]
+				}
+				// All locked → phase 2 (fade)
+				if len(m.matrixPending) == 0 {
+					m.matrixPhase = 2
+				}
+			}
+			// Phase 2 → boot after 10 ticks (500ms)
+			if m.matrixPhase == 2 && m.tickCount >= 40+len(views.NameBannerLines())*6/6+10 {
+				m.currentView = ViewBoot
+			}
+			return m, tickCmd()
+		}
+
 		// ── Boot sequence ──────────────────────────────────────────
 		if m.currentView == ViewBoot {
 			// Reveal lines based on schedule
@@ -331,6 +386,8 @@ func (m Model) View() string {
 	var content string
 
 	switch m.currentView {
+	case ViewMatrix:
+		return views.RenderMatrix(m.renderer, m.width, m.height, m.matrixCols, m.matrixLocked, m.matrixPhase == 2)
 	case ViewBoot:
 		return views.RenderBoot(m.renderer, m.width, m.height, m.bootVisible, m.bootLines)
 	case ViewAlert:
