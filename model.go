@@ -14,11 +14,10 @@ const (
 	ViewProjects
 	ViewAbout
 	ViewContacts
-	ViewResume
 )
 
 // Tab names for navigation
-var tabNames = []string{"Projects", "About", "Contacts", "Resume"}
+var tabNames = []string{"Projects", "About", "Contacts"}
 
 // Model is the main Bubbletea model
 type Model struct {
@@ -128,8 +127,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.currentView = ViewAbout
 				case 2:
 					m.currentView = ViewContacts
-				case 3:
-					m.currentView = ViewResume
 				}
 			}
 			return m, nil
@@ -156,8 +153,6 @@ func (m Model) View() string {
 		content = views.RenderAbout(m.renderer, m.width, m.height)
 	case ViewContacts:
 		content = views.RenderContacts(m.renderer, m.width, m.height)
-	case ViewResume:
-		content = views.RenderResume(m.renderer, m.width, m.height)
 	}
 
 	return content

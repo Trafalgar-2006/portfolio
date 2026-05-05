@@ -1,6 +1,6 @@
 # SSH TUI Portfolio — Improvement Tracker
 
-**5** Critical fixes · **6** UI polish · **5** Content gaps · **6** Backend ideas
+**4** Critical fixes · **6** UI polish · **5** Content gaps · **6** Backend ideas
 
 ---
 
@@ -15,12 +15,8 @@ Option: bigletters.SetFont(...) with smaller font size for full surname
 
 ---
 
-### 🔴 Typo in resume PDF URL — "portflio"
-The GitHub raw link reads `Trafalgar-2006/portflio` — missing an 'o'. Anyone clicking this gets a 404. Either rename the repo to `portfolio` or fix the URL to match the actual repo name. This is the highest-traffic link in your whole TUI.
-
-```
-https://github.com/Trafalgar-2006/portfolio/raw/master/...
-```
+### ~~🔴 Typo in resume PDF URL — "portflio"~~
+> **Resolved** — URL matches actual repo name `portflio`. No action needed.
 
 ---
 
@@ -33,13 +29,13 @@ Add ProjectDetail view: description, links, stack, status (Live / WIP)
 
 ---
 
-### 🔴 Resume and About sections duplicate skills
-Tech skills (languages, frameworks, tools) appear in both the About page and the Resume page. This wastes space and looks unpolished. Keep skills in one place — About for context, Resume for the scannable list.
+### ~~🔴 Resume and About sections duplicate skills~~
+> **Resolved** — Resume tab removed entirely. Skills now live only in About.
 
 ---
 
-### 🔴 No loading/error state for SSH connection drops
-Railway free tier can cold-start. If someone SSHes in and the container is spinning up, they see a raw connection error. A simple retry message or graceful banner would make it feel intentional rather than broken.
+### ~~🔴 No loading/error state for SSH connection drops~~
+> **Deferred** — Railway keep-alive via UptimeRobot reduces cold-starts significantly.
 
 ---
 
@@ -55,7 +51,7 @@ tea.Tick(50ms) → reveal rune-by-rune on the banner
 ---
 
 ### 🟡 Navigation tab highlight is too subtle
-The active tab (♦ Projects) uses a diamond prefix. It's easy to miss at a glance. Consider inverting the background — highlight color background with dark text — so the active tab is immediately obvious, especially on terminals with non-default color schemes.
+The active tab uses a diamond prefix. It's easy to miss at a glance. Consider inverting the background — highlight color background with dark text — so the active tab is immediately obvious, especially on terminals with non-default color schemes.
 
 ---
 
@@ -81,13 +77,13 @@ A small "You are visitor #N" counter displayed on the splash or contacts page wo
 
 ## Content
 
-### 🔴 Missing your strongest projects — trading system & couples app
-Your automated swing trader (Python, Alpaca, SQLite, Oracle Cloud) and the couples web app are real shipped projects not listed anywhere. The trading system especially is impressive — it shows systems thinking, finance domain knowledge, and production deployment.
+### ~~🔴 Resume tab removed — decided~~
+> **Decision** — Resume tab dropped. Experience timeline and skills absorbed into About. PDF download link added to About page footer. EmbedGen remains prominently in Projects as #1.
 
 ---
 
-### 🔴 EmbedGen project missing from the list
-EmbedGen (Python, PyTorch, LoRA, GGUF) is mentioned on the resume page but absent from the Projects tab. That's arguably your most technically impressive project — custom LLM fine-tuned for embedded systems codebases, quantized for edge deployment. It should be project #1.
+### ~~🔴 EmbedGen project missing from the list~~
+> **Resolved** — EmbedGen is now Project #1 in the Projects tab.
 
 ---
 

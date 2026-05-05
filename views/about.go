@@ -15,7 +15,7 @@ func RenderAbout(r *lipgloss.Renderer, width, height int) string {
 	greenStyle   := r.NewStyle().Foreground(lipgloss.Color("#50FA7B"))
 	purpleStyle  := r.NewStyle().Foreground(lipgloss.Color("#BD93F9"))
 	orangeStyle  := r.NewStyle().Foreground(lipgloss.Color("#FFB86C"))
-	divider      := dimStyle.Render("  ─────────────────────────────────────────")
+	divider      := dimStyle.Render("  ─────────────────────────────────────────────")
 
 	var b strings.Builder
 	b.WriteString("\n")
@@ -24,45 +24,58 @@ func RenderAbout(r *lipgloss.Renderer, width, height int) string {
 
 	// Name & tagline
 	b.WriteString("  " + goldStyle.Bold(true).Render("Mohith Akshay Duggirala") + "\n")
-	b.WriteString("  " + magentaStyle.Italic(true).Render("Engineer · Builder · Creator") + "\n")
+	b.WriteString("  " + magentaStyle.Italic(true).Render("AI/ML Engineer · Full-Stack Developer · Builder") + "\n")
 	b.WriteString("  " + dimStyle.Render("Bengaluru, Karnataka, India") + "\n\n")
 
 	// Education
-	b.WriteString("  " + cyanStyle.Bold(true).Render("🎓 Education") + "\n")
-	b.WriteString("  " + whiteStyle.Render("B.Tech in Electronics & Computer Engineering") + "\n")
-	b.WriteString("  " + whiteStyle.Render("Manipal Institute of Technology, Bengaluru") + "\n")
+	b.WriteString("  " + cyanStyle.Bold(true).Render("◆ Education") + "\n")
+	b.WriteString("  " + whiteStyle.Bold(true).Render("Manipal Institute of Technology, Bengaluru") + "\n")
+	b.WriteString("  " + whiteStyle.Render("B.Tech — Electronics & Computer Engineering") + "\n")
 	b.WriteString("  " + dimStyle.Render("Aug 2023 – Jul 2027") + "\n")
-	b.WriteString("  " + greenStyle.Render("▸ ") + whiteStyle.Render("Active member and President of ") + purpleStyle.Render("MBOSC") + "\n")
-	b.WriteString("  " + dimStyle.Render("  Coursework: Computer Architecture, Data Structures,") + "\n")
-	b.WriteString("  " + dimStyle.Render("  Network Protocols, Embedded Systems") + "\n\n")
+	b.WriteString("  " + greenStyle.Render("▸ ") + whiteStyle.Render("President, ") + purpleStyle.Render("MBOSC") + dimStyle.Render(" (Manipal Bengaluru Open Source Community)") + "\n\n")
 
-	// Experience
-	b.WriteString("  " + cyanStyle.Bold(true).Render("💼 Experience") + "\n")
-	b.WriteString("  " + greenStyle.Render("▸ ") + whiteStyle.Render("Computer Vision Research Intern, ") + magentaStyle.Render("ISRO – LEOS") + "\n")
-	b.WriteString("    " + dimStyle.Render("Dec 2025 – Jan 2026") + "\n")
-	b.WriteString("  " + greenStyle.Render("▸ ") + whiteStyle.Render("Founder & Lead Designer, ") + magentaStyle.Render("Webcraft Studios") + "\n")
-	b.WriteString("    " + dimStyle.Render("2025 – Present  ·  Bengaluru, IN") + "\n")
-	b.WriteString("  " + greenStyle.Render("▸ ") + whiteStyle.Render("Full Stack Developer Intern, ") + magentaStyle.Render("SnuqSq Tech Solutions") + "\n")
-	b.WriteString("    " + dimStyle.Render("Mar 2025 – Jul 2025") + "\n\n")
+	// Experience timeline (absorbed from removed Resume tab)
+	b.WriteString("  " + cyanStyle.Bold(true).Render("◆ Experience") + "\n\n")
 
-	// Specializations
-	b.WriteString("  " + cyanStyle.Bold(true).Render("🔬 Specializations") + "\n")
-	b.WriteString("  " + greenStyle.Render("▸ ") + whiteStyle.Render("Computer Vision (Sim-to-Real Transfer)") + "\n")
-	b.WriteString("  " + greenStyle.Render("▸ ") + whiteStyle.Render("Full-Stack Development & Scalable AI Pipelines") + "\n")
-	b.WriteString("  " + greenStyle.Render("▸ ") + whiteStyle.Render("Edge Deployment (NVIDIA Jetson, TensorRT)") + "\n")
-	b.WriteString("  " + greenStyle.Render("▸ ") + whiteStyle.Render("SEO Optimization & Embedded Systems") + "\n\n")
+	b.WriteString("  " + goldStyle.Bold(true).Render("Computer Vision Research Intern") + "\n")
+	b.WriteString("  " + magentaStyle.Render("ISRO – LEOS") + "  " + dimStyle.Render("Dec 2025 – Jan 2026") + "\n")
+	b.WriteString("  " + greenStyle.Render("▸ ") + dimStyle.Render("Synthetic data generation with BlenderProc (6,000+ images)") + "\n")
+	b.WriteString("  " + greenStyle.Render("▸ ") + dimStyle.Render("YOLOv7+Segmentation on NVIDIA Jetson via TensorRT @ 22 FPS") + "\n")
+	b.WriteString("  " + greenStyle.Render("▸ ") + dimStyle.Render("GAN-based sim-to-real style transfer (Unreal Engine 5)") + "\n\n")
 
-	// Technical Skills — removed (see Resume tab)
+	b.WriteString("  " + goldStyle.Bold(true).Render("Founder & Lead Developer") + "\n")
+	b.WriteString("  " + magentaStyle.Render("Webcraft Studios") + "  " + dimStyle.Render("2025 – Present") + "\n")
+	b.WriteString("  " + greenStyle.Render("▸ ") + dimStyle.Render("Full-stack apps, CV pipelines, scalable AI products") + "\n")
+	b.WriteString("  " + greenStyle.Render("▸ ") + dimStyle.Render("Product design, engineering & client delivery") + "\n\n")
+
+	b.WriteString("  " + goldStyle.Bold(true).Render("Full Stack Developer Intern") + "\n")
+	b.WriteString("  " + magentaStyle.Render("SnuqSq Tech Solutions") + "  " + dimStyle.Render("Mar 2025 – Jul 2025") + "\n")
+	b.WriteString("  " + greenStyle.Render("▸ ") + dimStyle.Render("Built and shipped production features") + "\n\n")
+
+	// Skills (re-added since Resume tab is removed)
+	b.WriteString("  " + cyanStyle.Bold(true).Render("◆ Skills") + "\n\n")
+
+	skills := []struct{ cat, items string }{
+		{"AI / ML",       "PyTorch · TensorFlow · LoRA · GGUF · YOLOv7 · TensorRT · OpenCV"},
+		{"Languages",     "Python · Go · TypeScript · JavaScript · C/C++"},
+		{"Web / Backend", "React · Next.js · Node.js · FastAPI · Firebase"},
+		{"Tools",         "Docker · Git · CUDA · NVIDIA Jetson · Linux · AWS"},
+	}
+	for _, s := range skills {
+		b.WriteString("  " + orangeStyle.Bold(true).Render(s.cat) + "\n")
+		b.WriteString("    " + dimStyle.Render(s.items) + "\n\n")
+	}
 
 	// Interests
-	b.WriteString("  " + cyanStyle.Bold(true).Render("🌟 Interests") + "\n")
+	b.WriteString("  " + cyanStyle.Bold(true).Render("◆ What drives me") + "\n")
 	b.WriteString("  " + dimStyle.Render("Shipping things that actually work in production —") + "\n")
-	b.WriteString("  " + dimStyle.Render("from satellite CV pipelines at ISRO, to a live") + "\n")
-	b.WriteString("  " + dimStyle.Render("autonomous trading system on Oracle Cloud, to this") + "\n")
-	b.WriteString("  " + dimStyle.Render("very SSH portfolio you're viewing right now.") + "\n\n")
+	b.WriteString("  " + dimStyle.Render("from satellite CV at ISRO, to a live autonomous") + "\n")
+	b.WriteString("  " + dimStyle.Render("trading system, to this SSH portfolio you're in now.") + "\n\n")
 
-	b.WriteString(divider + "\n")
-	b.WriteString("\n")
+	b.WriteString("  " + dimStyle.Render("Resume PDF →") + "\n")
+	b.WriteString("  " + orangeStyle.Render("github.com/Trafalgar-2006/portflio/raw/master/Mohith_Akshay_Duggirala_Resume.pdf") + "\n\n")
+
+	b.WriteString(divider + "\n\n")
 	b.WriteString("  " + dimStyle.Render("[esc to go back]") + "\n")
 
 	return b.String()
