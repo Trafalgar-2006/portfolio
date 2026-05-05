@@ -34,7 +34,7 @@ var portraitArt = []string{
 	" ⠀⠀⠀⠀⠀⠀⢰⢁⠢⢡⠘⡐⢌⠢⡁⠌⠀⠀⠀⠄⠀⠀⠀⠈⢀⠠⢁⢂⠐⠀⠈⠀⠐⠡⡁⠌⠠⠌⡀⠃⠌⠠⢁⠊⠡⢀⠂⠱⢀⠂",
 }
 
-// Name banner — figlet-style ASCII art for "Mohith Akshay . D"
+// Name banner — figlet-style ASCII art for "Mohith Akshay"
 var nameBanner = []string{
 	"███╗   ███╗   ██████╗   ██╗  ██╗  ██╗  ████████╗  ██╗  ██╗",
 	"████╗ ████║  ██╔═══██╗  ██║  ██║  ██║  ╚══██╔══╝  ██║  ██║",
@@ -49,13 +49,6 @@ var nameBanner = []string{
 	"██╔══██║  ██╔═██╗   ╚════██║  ██╔══██║  ██╔══██║    ╚██╔╝  ",
 	"██║  ██║  ██║  ██╗  ███████║  ██║  ██║  ██║  ██║     ██║   ",
 	"╚═╝  ╚═╝  ╚═╝  ╚═╝  ╚══════╝  ╚═╝  ╚═╝  ╚═╝  ╚═╝     ╚═╝   ",
-	"",
-	"         ██████╗ ",
-	"         ██╔══██╗",
-	"         ██║  ██║",
-	"         ██║  ██║",
-	"██╗      ██████╔╝",
-	"╚═╝      ╚═════╝ ",
 }
 
 // Star field decorations
@@ -107,6 +100,7 @@ func RenderHome(r *lipgloss.Renderer, width, height int) string {
 	for _, line := range nameBanner {
 		rightCol.WriteString(cyanStyle.Render(line) + "\n")
 	}
+	rightCol.WriteString(magentaStyle.Render("  ·  D U G G I R A L A  ·") + "\n")
 	rightCol.WriteString("\n")
 
 	// Stars

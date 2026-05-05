@@ -52,20 +52,14 @@ func RenderAbout(r *lipgloss.Renderer, width, height int) string {
 	b.WriteString("  " + greenStyle.Render("▸ ") + whiteStyle.Render("Edge Deployment (NVIDIA Jetson, TensorRT)") + "\n")
 	b.WriteString("  " + greenStyle.Render("▸ ") + whiteStyle.Render("SEO Optimization & Embedded Systems") + "\n\n")
 
-	// Technical Skills
-	b.WriteString("  " + cyanStyle.Bold(true).Render("⚙ Technical Skills") + "\n")
-	b.WriteString("  " + orangeStyle.Render("Languages  ") + dimStyle.Render("JavaScript, TypeScript, Python, C++, HTML/CSS, SQL, Go") + "\n")
-	b.WriteString("  " + orangeStyle.Render("Frameworks ") + dimStyle.Render("React, Next.js, Node.js, YOLOv7, BlenderProc, PyTorch,") + "\n")
-	b.WriteString("             " + dimStyle.Render("TensorRT, OpenCV, React Native, Tailwind CSS, Svelte") + "\n")
-	b.WriteString("  " + orangeStyle.Render("Tools      ") + dimStyle.Render("NVIDIA Jetson, Unreal Engine 5, Max-Q (SPICE), AWS,") + "\n")
-	b.WriteString("             " + dimStyle.Render("MongoDB, PostgreSQL, Firebase, Git, Docker") + "\n\n")
+	// Technical Skills — removed (see Resume tab)
 
 	// Interests
 	b.WriteString("  " + cyanStyle.Bold(true).Render("🌟 Interests") + "\n")
-	b.WriteString("  " + dimStyle.Render("Building products that bridge the gap between") + "\n")
-	b.WriteString("  " + dimStyle.Render("research and real-world deployment. Passionate") + "\n")
-	b.WriteString("  " + dimStyle.Render("about open source, developer tools, and making") + "\n")
-	b.WriteString("  " + dimStyle.Render("AI systems that actually work in production.") + "\n\n")
+	b.WriteString("  " + dimStyle.Render("Shipping things that actually work in production —") + "\n")
+	b.WriteString("  " + dimStyle.Render("from satellite CV pipelines at ISRO, to a live") + "\n")
+	b.WriteString("  " + dimStyle.Render("autonomous trading system on Oracle Cloud, to this") + "\n")
+	b.WriteString("  " + dimStyle.Render("very SSH portfolio you're viewing right now.") + "\n\n")
 
 	b.WriteString(divider + "\n")
 	b.WriteString("\n")

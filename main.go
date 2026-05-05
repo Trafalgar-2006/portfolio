@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -69,6 +70,16 @@ func runSSHServer() {
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	// Health check HTTP server (Railway needs this to mark container healthy)
+	go func() {
+		http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("OK"))
+		})
+		log.Println("Health check listening on :8080")
+		http.ListenAndServe(":8080", nil)
+	}()
 
 	log.Printf("Starting SSH server on %s:%s", host, port)
 	log.Printf("Connect with: ssh localhost -p %s", port)

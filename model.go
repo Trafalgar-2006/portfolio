@@ -166,22 +166,22 @@ func (m Model) View() string {
 // renderTabBar renders the bottom navigation tabs using the session renderer
 func (m Model) renderTabBar() string {
 	r := m.renderer
-	activeStyle   := r.NewStyle().Bold(true).Foreground(ColorCyan)
-	inactiveStyle := r.NewStyle().Foreground(ColorDimWhite)
-	hintStyle     := r.NewStyle().Foreground(ColorDimWhite).Italic(true)
-	sep           := "    "
+	activeStyle   := r.NewStyle().Bold(true).Background(lipgloss.Color("#00DFDF")).Foreground(lipgloss.Color("#0A0A0A")).Padding(0, 1)
+	inactiveStyle := r.NewStyle().Foreground(lipgloss.Color("#555555"))
+	hintStyle     := r.NewStyle().Foreground(lipgloss.Color("#444444")).Italic(true)
+	sep           := "  "
 
 	var tabs []string
 	for i, name := range tabNames {
 		if i == m.activeTab {
-			tabs = append(tabs, activeStyle.Render("✦ "+name))
+			tabs = append(tabs, activeStyle.Render(name))
 		} else {
 			tabs = append(tabs, inactiveStyle.Render(name))
 		}
 	}
 
 	tabBar := "\n " + joinStrings(tabs, sep) + "\n"
-	tabBar += "\n " + hintStyle.Render("[← → to select · enter to open · q to quit]") + "\n"
+	tabBar += "\n " + hintStyle.Render("[← → tabs · enter open · ↑↓ browse · q quit]") + "\n"
 
 	return tabBar
 }

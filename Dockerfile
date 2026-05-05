@@ -24,5 +24,6 @@ ENV SSH_ENABLED=true
 ENV COLORTERM=truecolor
 ENV TERM=xterm-256color
 EXPOSE 23234
+EXPOSE 8080
 
 CMD ["./ssh-portfolio"]

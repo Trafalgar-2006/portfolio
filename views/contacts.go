@@ -13,10 +13,10 @@ type Contact struct {
 }
 
 var AllContacts = []Contact{
-	{Icon: "📧", Label: "Email", Value: "d.mohithakshay@gmail.com"},
-	{Icon: "🌐", Label: "Website", Value: "webcraftstudios.co.in"},
-	{Icon: "💼", Label: "LinkedIn", Value: "linkedin.com/in/dmohithakshay"},
-	{Icon: "🐙", Label: "GitHub", Value: "github.com/trafalgar-2006"},
+	{Icon: "(@)", Label: "Email", Value: "d.mohithakshay@gmail.com"},
+	{Icon: "(~)", Label: "Website", Value: "webcraftstudios.co.in"},
+	{Icon: "(in)", Label: "LinkedIn", Value: "linkedin.com/in/dmohithakshay"},
+	{Icon: "(gh)", Label: "GitHub", Value: "github.com/trafalgar-2006"},
 }
 
 func RenderContacts(r *lipgloss.Renderer, width, height int) string {
