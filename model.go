@@ -63,6 +63,12 @@ type Model struct {
 	blink        bool
 	lastCommit   string // cached GitHub commit message
 
+	// Wipe transition
+	wipePhase   int  // 0=none, 1=wipe-out, 2=wipe-in
+	wipeLines   int  // lines exposed so far
+	pendingView View // view to switch to after wipe-out
+	pendingTab  int  // tab to activate after wipe-out
+
 	// Projects
 	projectCursor  int
 	projectScroll  int
@@ -123,12 +129,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.quitting = true
 				return m, tea.Quit
 			}
-			m.currentView = ViewHome
+			m.startWipe(ViewHome, m.activeTab)
 			return m, nil
 
 		case "esc":
 			if m.currentView != ViewHome && m.currentView != ViewBoot && m.currentView != ViewAlert {
-				m.currentView = ViewHome
+				m.startWipe(ViewHome, m.activeTab)
 				return m, nil
 			}
 			if m.currentView == ViewHome {
@@ -185,16 +191,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.currentView == ViewHome {
 				switch m.activeTab {
 				case 0:
-					m.currentView = ViewProjects
-					m.projectCursor = 0
-					m.projectsReveal = 0
-					m.tagPopReveal = 0
+					m.startWipe(ViewProjects, 0)
 				case 1:
-					m.currentView = ViewAbout
+					m.startWipe(ViewAbout, 1)
 				case 2:
-					m.currentView = ViewContacts
-					m.contactsReveal = 0
-					m.sshFlash = 4
+					m.startWipe(ViewContacts, 2)
 				}
 			}
 			return m, nil
@@ -202,6 +203,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tickMsg:
 		m.tickCount++
+
+		// ── Wipe transition ─────────────────────────────────────────────
+		if m.wipePhase != 0 {
+			step := m.height / 4
+			if step < 4 { step = 4 }
+			m.wipeLines += step
+			if m.wipePhase == 1 && m.wipeLines >= m.height {
+				// Switch to pending view
+				m.currentView = m.pendingView
+				if m.pendingView == ViewProjects { m.projectCursor = 0; m.projectsReveal = 0; m.tagPopReveal = 0 }
+				if m.pendingView == ViewContacts { m.contactsReveal = 0; m.sshFlash = 4 }
+				m.wipePhase = 2
+				m.wipeLines = 0
+			} else if m.wipePhase == 2 && m.wipeLines >= m.height {
+				m.wipePhase = 0
+				m.wipeLines = 0
+			}
+			return m, tickCmd()
+		}
 
 		// ── Boot sequence ──────────────────────────────────────────
 		if m.currentView == ViewBoot {
@@ -308,28 +328,53 @@ func (m Model) View() string {
 		return "\n  Thanks for visiting! ✦\n\n"
 	}
 
+	var content string
+
 	switch m.currentView {
 	case ViewBoot:
 		return views.RenderBoot(m.renderer, m.width, m.height, m.bootVisible, m.bootLines)
-
 	case ViewAlert:
 		return views.RenderAlert(m.renderer, m.width, m.height, m.alertPhase)
-
 	case ViewHome:
-		content := views.RenderHome(m.renderer, m.width, m.height, m.revealIdx, m.blink, m.taglineIdx, m.taglineDone, m.cursorBlink, m.glitchFrames, m.glitchRunes, m.lastCommit)
+		content = views.RenderHome(m.renderer, m.width, m.height, m.revealIdx, m.blink, m.taglineIdx, m.taglineDone, m.cursorBlink, m.glitchFrames, m.glitchRunes, m.lastCommit)
 		content += m.renderTabBar()
-		return content
-
 	case ViewProjects:
-		return views.RenderProjects(m.renderer, m.width, m.height, m.projectCursor, m.projectScroll, m.projectsReveal, m.tagPopReveal, m.livePulse)
-
+		content = views.RenderProjects(m.renderer, m.width, m.height, m.projectCursor, m.projectScroll, m.projectsReveal, m.tagPopReveal, m.livePulse)
 	case ViewAbout:
-		return views.RenderAbout(m.renderer, m.width, m.height)
-
+		content = views.RenderAbout(m.renderer, m.width, m.height)
 	case ViewContacts:
-		return views.RenderContacts(m.renderer, m.width, m.height, m.contactsReveal, m.sshFlash)
+		content = views.RenderContacts(m.renderer, m.width, m.height, m.contactsReveal, m.sshFlash)
+	default:
+		return ""
 	}
-	return ""
+
+	// Apply wipe mask
+	if m.wipePhase != 0 {
+		lines := strings.Split(content, "\n")
+		for i := range lines {
+			var blank bool
+			if m.wipePhase == 1 {
+				// Wipe-out: blank lines from top downward
+				blank = i < m.wipeLines
+			} else {
+				// Wipe-in: reveal lines from top downward
+				blank = i >= m.wipeLines
+			}
+			if blank {
+				lines[i] = ""
+			}
+		}
+		content = strings.Join(lines, "\n")
+	}
+	return content
+}
+
+// startWipe begins a wipe-out → switch → wipe-in transition
+func (m *Model) startWipe(target View, tab int) {
+	m.pendingView = target
+	m.pendingTab = tab
+	m.wipePhase = 1
+	m.wipeLines = 0
 }
 
 func (m Model) renderTabBar() string {
