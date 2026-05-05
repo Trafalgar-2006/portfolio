@@ -62,13 +62,6 @@ var AllProjects = []Project{
 		GitHubURL:   "",
 	},
 	{
-		Title:       "ARAK — Real-time Couples App",
-		Description: "Real-time couples connection app with shared games, photo walls, starmaps, bucket lists, and synchronized media. Firebase-powered live sync.",
-		Tags:        []string{"React", "Firebase", "TypeScript"},
-		Status:      "Live",
-		GitHubURL:   "",
-	},
-	{
 		Title:       "SSH Portfolio (this one)",
 		Description: "This portfolio — an interactive TUI accessible over SSH from anywhere in the world. Auto-deploys from GitHub via Railway.",
 		Tags:        []string{"Go", "Docker", "Railway"},
