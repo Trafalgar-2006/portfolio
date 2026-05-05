@@ -1,6 +1,11 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
+	"math/rand"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbletea"
@@ -49,11 +54,14 @@ type Model struct {
 	currentView View
 	activeTab   int
 	revealIdx   int  // banner reveal
+	glitchFrames int  // >0 = banner is glitching
+	glitchRunes  [][]rune // corrupted banner lines during glitch
 	taglineIdx  int  // typewriter char index
 	taglineDone bool
 	cursorBlink bool
 	cursorLeft  int // blink cycles remaining after typewrite done
-	blink       bool
+	blink        bool
+	lastCommit   string // cached GitHub commit message
 
 	// Projects
 	projectCursor  int
@@ -93,7 +101,7 @@ func NewModel(r *lipgloss.Renderer) Model {
 }
 
 func (m Model) Init() tea.Cmd {
-	return tickCmd()
+	return tea.Batch(tickCmd(), fetchCommit())
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -231,7 +239,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.currentView == ViewHome {
 			if m.revealIdx < views.BannerLines() {
 				m.revealIdx++
+				// Trigger glitch when banner just completed
+				if m.revealIdx == views.BannerLines() && m.glitchFrames == 0 {
+					m.glitchFrames = 3
+					m.glitchRunes = glitchBanner()
+				}
 			} else {
+				// Advance glitch frames every 2 ticks (100ms per frame)
+				if m.glitchFrames > 0 && m.tickCount%2 == 0 {
+					m.glitchFrames--
+					if m.glitchFrames > 0 {
+						m.glitchRunes = glitchBanner()
+					}
+				}
 				tagline := views.TaglineText
 				if m.taglineIdx < len([]rune(tagline)) {
 					m.taglineIdx++
@@ -273,6 +293,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		return m, tickCmd()
+
+	// ── GitHub commit fetch result ──────────────────────────────
+	case commitMsg:
+		m.lastCommit = string(msg)
+		return m, nil
+
 	}
 	return m, nil
 }
@@ -290,7 +316,7 @@ func (m Model) View() string {
 		return views.RenderAlert(m.renderer, m.width, m.height, m.alertPhase)
 
 	case ViewHome:
-		content := views.RenderHome(m.renderer, m.width, m.height, m.revealIdx, m.blink, m.taglineIdx, m.taglineDone, m.cursorBlink)
+		content := views.RenderHome(m.renderer, m.width, m.height, m.revealIdx, m.blink, m.taglineIdx, m.taglineDone, m.cursorBlink, m.glitchFrames, m.glitchRunes, m.lastCommit)
 		content += m.renderTabBar()
 		return content
 
@@ -334,6 +360,77 @@ func joinStrings(strs []string, sep string) string {
 			result += sep
 		}
 		result += s
+	}
+	return result
+}
+
+// commitMsg carries the last GitHub commit line back to the model
+type commitMsg string
+
+// fetchCommit fetches the latest commit from the GitHub API asynchronously
+func fetchCommit() tea.Cmd {
+	return func() tea.Msg {
+		type ghCommit struct {
+			Commit struct {
+				Message string `json:"message"`
+			} `json:"commit"`
+			CommitDate string // parsed below
+		}
+		client := &http.Client{Timeout: 4 * time.Second}
+		resp, err := client.Get("https://api.github.com/repos/Trafalgar-2006/portflio/commits?per_page=1")
+		if err != nil {
+			return commitMsg("")
+		}
+		defer resp.Body.Close()
+		var commits []struct {
+			Commit struct {
+				Message   string `json:"message"`
+				Author struct {
+					Date string `json:"date"`
+				} `json:"author"`
+			} `json:"commit"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&commits); err != nil || len(commits) == 0 {
+			return commitMsg("")
+		}
+		msg := commits[0].Commit.Message
+		// Trim to first line only
+		if idx := strings.Index(msg, "\n"); idx != -1 {
+			msg = msg[:idx]
+		}
+		if len(msg) > 52 {
+			msg = msg[:52] + "..."
+		}
+		// Relative time
+		pushedAt, err := time.Parse(time.RFC3339, commits[0].Commit.Author.Date)
+		ago := ""
+		if err == nil {
+			diff := time.Since(pushedAt)
+			switch {
+			case diff < time.Hour:
+				ago = fmt.Sprintf("%dm ago", int(diff.Minutes()))
+			case diff < 24*time.Hour:
+				ago = fmt.Sprintf("%dh ago", int(diff.Hours()))
+			default:
+				ago = fmt.Sprintf("%dd ago", int(diff.Hours()/24))
+			}
+		}
+		return commitMsg(fmt.Sprintf("\"%s\" · %s", msg, ago))
+	}
+}
+
+// glitchBanner returns a 2D slice of runes with ~20%% of non-space chars corrupted
+func glitchBanner() [][]rune {
+	glyphChars := []rune{'#', '@', '%', '$', '!', '?', '█', '▓', '&', '*'}
+	result := make([][]rune, len(views.NameBannerLines()))
+	for i, line := range views.NameBannerLines() {
+		runes := []rune(line)
+		for j, r := range runes {
+			if r != ' ' && rand.Float32() < 0.20 {
+				runes[j] = glyphChars[rand.Intn(len(glyphChars))]
+			}
+		}
+		result[i] = runes
 	}
 	return result
 }

@@ -74,7 +74,12 @@ func BannerLines() int {
 	return len(nameBanner)
 }
 
-func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, blink bool, taglineIdx int, taglineDone bool, cursorBlink bool) string {
+// NameBannerLines returns the raw banner strings (used by glitch effect)
+func NameBannerLines() []string {
+	return nameBanner
+}
+
+func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, blink bool, taglineIdx int, taglineDone bool, cursorBlink bool, glitchFrames int, glitchRunes [][]rune, lastCommit string) string {
 	cyanStyle     := r.NewStyle().Foreground(lipgloss.Color("#00DFDF"))
 	dimStyle      := r.NewStyle().Foreground(lipgloss.Color("#888888"))
 	whiteStyle    := r.NewStyle().Foreground(lipgloss.Color("#E0E0E0"))
@@ -119,14 +124,19 @@ func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, blink bool, 
 	rightCol.WriteString(starStyle.Render(" +") + "     " + starStyle.Render("*") + "\n")
 	rightCol.WriteString("\n")
 
-	// Name banner — reveal one line per tick
+	// Name banner — reveal one line per tick, glitch on completion
 	visibleBanner := revealIdx
 	if visibleBanner > len(nameBanner) {
 		visibleBanner = len(nameBanner)
 	}
 	for i, line := range nameBanner {
 		if i < visibleBanner {
-			rightCol.WriteString(cyanStyle.Render(line) + "\n")
+			// If glitching, use corrupted runes
+			if glitchFrames > 0 && glitchRunes != nil && i < len(glitchRunes) {
+				rightCol.WriteString(r.NewStyle().Foreground(lipgloss.Color("#FF6AC1")).Render(string(glitchRunes[i])) + "\n")
+			} else {
+				rightCol.WriteString(cyanStyle.Render(line) + "\n")
+			}
 		} else {
 			rightCol.WriteString("\n") // hold space
 		}
@@ -159,10 +169,6 @@ func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, blink bool, 
 	}
 
 	bioLines := []string{
-		whiteStyle.Render("is an engineer, builder &"),
-		whiteStyle.Render("creator who turns ideas"),
-		whiteStyle.Render("into products."),
-		"",
 		dimStyle.Render("Founder & Lead Designer of"),
 		magentaStyle.Render("Webcraft Studios") + dimStyle.Render(","),
 		dimStyle.Render("building full-stack apps,"),
@@ -232,6 +238,12 @@ func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, blink bool, 
 			padding = 0
 		}
 		combined.WriteString(" " + left + strings.Repeat(" ", padding) + gap + right + "\n")
+	}
+
+	// Last GitHub commit — dim line at the bottom
+	if lastCommit != "" {
+		commitStyle := r.NewStyle().Foreground(lipgloss.Color("#444444")).Italic(true)
+		combined.WriteString("\n " + commitStyle.Render("last pushed: "+lastCommit) + "\n")
 	}
 
 	return combined.String()
