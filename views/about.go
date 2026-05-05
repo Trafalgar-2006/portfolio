@@ -14,6 +14,7 @@ func RenderAbout(width, height int) string {
 	goldStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFD700"))
 	greenStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#50FA7B"))
 	purpleStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#BD93F9"))
+	orangeStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFB86C"))
 	divider := dimStyle.Render("  ─────────────────────────────────────────")
 
 	var b strings.Builder
@@ -23,25 +24,41 @@ func RenderAbout(width, height int) string {
 
 	// Name & tagline
 	b.WriteString("  " + goldStyle.Bold(true).Render("Mohith Akshay Duggirala") + "\n")
-	b.WriteString("  " + magentaStyle.Italic(true).Render("Engineer · Builder · Creator") + "\n\n")
+	b.WriteString("  " + magentaStyle.Italic(true).Render("Engineer · Builder · Creator") + "\n")
+	b.WriteString("  " + dimStyle.Render("Bengaluru, Karnataka, India") + "\n\n")
 
 	// Education
 	b.WriteString("  " + cyanStyle.Bold(true).Render("🎓 Education") + "\n")
-	b.WriteString("  " + whiteStyle.Render("Electronics & Computer Engineering") + "\n")
-	b.WriteString("  " + whiteStyle.Render("Manipal Institute of Technology, Bangalore") + "\n")
-	b.WriteString("  " + dimStyle.Render("2023 – 2027") + "\n\n")
+	b.WriteString("  " + whiteStyle.Render("B.Tech in Electronics & Computer Engineering") + "\n")
+	b.WriteString("  " + whiteStyle.Render("Manipal Institute of Technology, Bengaluru") + "\n")
+	b.WriteString("  " + dimStyle.Render("Aug 2023 – Jul 2027") + "\n")
+	b.WriteString("  " + greenStyle.Render("▸ ") + whiteStyle.Render("Active member and President of ") + purpleStyle.Render("MBOSC") + "\n")
+	b.WriteString("  " + dimStyle.Render("  Coursework: Computer Architecture, Data Structures,") + "\n")
+	b.WriteString("  " + dimStyle.Render("  Network Protocols, Embedded Systems") + "\n\n")
 
-	// Roles
-	b.WriteString("  " + cyanStyle.Bold(true).Render("💼 Roles") + "\n")
-	b.WriteString("  " + greenStyle.Render("▸ ") + whiteStyle.Render("Founder, ") + magentaStyle.Render("Webcraft Studios") + "\n")
-	b.WriteString("  " + greenStyle.Render("▸ ") + whiteStyle.Render("President, ") + purpleStyle.Render("MBOSC") + dimStyle.Render(" (Manipal Bengaluru Open Source Community)") + "\n\n")
+	// Experience
+	b.WriteString("  " + cyanStyle.Bold(true).Render("💼 Experience") + "\n")
+	b.WriteString("  " + greenStyle.Render("▸ ") + whiteStyle.Render("Computer Vision Research Intern, ") + magentaStyle.Render("ISRO – LEOS") + "\n")
+	b.WriteString("    " + dimStyle.Render("Dec 2025 – Jan 2026") + "\n")
+	b.WriteString("  " + greenStyle.Render("▸ ") + whiteStyle.Render("Founder & Lead Designer, ") + magentaStyle.Render("Webcraft Studios") + "\n")
+	b.WriteString("    " + dimStyle.Render("2025 – Present  ·  Bengaluru, IN") + "\n")
+	b.WriteString("  " + greenStyle.Render("▸ ") + whiteStyle.Render("Full Stack Developer Intern, ") + magentaStyle.Render("SnuqSq Tech Solutions") + "\n")
+	b.WriteString("    " + dimStyle.Render("Mar 2025 – Jul 2025") + "\n\n")
 
 	// Specializations
 	b.WriteString("  " + cyanStyle.Bold(true).Render("🔬 Specializations") + "\n")
 	b.WriteString("  " + greenStyle.Render("▸ ") + whiteStyle.Render("Computer Vision (Sim-to-Real Transfer)") + "\n")
-	b.WriteString("  " + greenStyle.Render("▸ ") + whiteStyle.Render("Full-Stack Development (React, Next.js, Node.js)") + "\n")
-	b.WriteString("  " + greenStyle.Render("▸ ") + whiteStyle.Render("AI Perception Pipelines") + "\n")
-	b.WriteString("  " + greenStyle.Render("▸ ") + whiteStyle.Render("Edge Deployment (NVIDIA Jetson)") + "\n\n")
+	b.WriteString("  " + greenStyle.Render("▸ ") + whiteStyle.Render("Full-Stack Development & Scalable AI Pipelines") + "\n")
+	b.WriteString("  " + greenStyle.Render("▸ ") + whiteStyle.Render("Edge Deployment (NVIDIA Jetson, TensorRT)") + "\n")
+	b.WriteString("  " + greenStyle.Render("▸ ") + whiteStyle.Render("SEO Optimization & Embedded Systems") + "\n\n")
+
+	// Technical Skills
+	b.WriteString("  " + cyanStyle.Bold(true).Render("⚙ Technical Skills") + "\n")
+	b.WriteString("  " + orangeStyle.Render("Languages  ") + dimStyle.Render("JavaScript, TypeScript, Python, C++, HTML/CSS, SQL, Go") + "\n")
+	b.WriteString("  " + orangeStyle.Render("Frameworks ") + dimStyle.Render("React, Next.js, Node.js, YOLOv7, BlenderProc, PyTorch,") + "\n")
+	b.WriteString("             " + dimStyle.Render("TensorRT, OpenCV, React Native, Tailwind CSS, Svelte") + "\n")
+	b.WriteString("  " + orangeStyle.Render("Tools      ") + dimStyle.Render("NVIDIA Jetson, Unreal Engine 5, Max-Q (SPICE), AWS,") + "\n")
+	b.WriteString("             " + dimStyle.Render("MongoDB, PostgreSQL, Firebase, Git, Docker") + "\n\n")
 
 	// Interests
 	b.WriteString("  " + cyanStyle.Bold(true).Render("🌟 Interests") + "\n")

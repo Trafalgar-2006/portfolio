@@ -17,35 +17,34 @@ type Project struct {
 var AllProjects = []Project{
 	{
 		Title:       "Webcraft Studios Platform",
-		Description: "Full-stack web development agency platform for managing client projects, team collaboration, and seamless deployment workflows.",
-		Tags:        []string{"React", "Node.js", "MongoDB", "AWS"},
+		Description: "Built comprehensive digital agency platform with modern web technologies and clean UI/UX design. Implemented SEO optimization and performance-driven architecture for global client base.",
+		Tags:        []string{"React", "Node.js", "MongoDB", "AWS", "Python"},
 	},
 	{
 		Title:       "Myntra Minis Integration",
-		Description: "Social commerce integration enabling shoppable mini-apps within the Myntra ecosystem, driving user engagement and conversion.",
-		Tags:        []string{"JavaScript", "React Native", "Firebase"},
+		Description: "Developed custom e-commerce solutions and integration for Myntra's mini-app ecosystem. Delivered scalable design system resulting in improved conversion rates.",
+		Tags:        []string{"JavaScript", "React Native", "REST APIs", "Firebase"},
 	},
 	{
 		Title:       "Str8Fire.io Platform",
-		Description: "SaaS platform with integrated payment processing, user dashboards, and real-time analytics for content creators.",
-		Tags:        []string{"Next.js", "TypeScript", "PostgreSQL", "Stripe"},
+		Description: "Built complete SaaS platform with modern web stack, user administration, and dashboard analytics for content creators.",
+		Tags:        []string{"Next.js", "TypeScript", "PostgreSQL", "Vercel", "Stripe API"},
 	},
 	{
 		Title:       "Frog Call Classifier",
-		Description: "ML pipeline for classifying frog species from audio recordings using MFCC feature extraction and ensemble methods.",
-		Tags:        []string{"Python", "Scikit-learn", "MFCC"},
-		Highlight:   "85% accuracy",
+		Description: "Created a machine learning model to identify frog species with over 803 species using MFCC-based feature extraction. Implemented preprocessing pipeline for environmental audio classification.",
+		Tags:        []string{"Python", "Librosa", "Scikit-learn", "MFCC Analysis"},
 	},
 	{
 		Title:       "Bird Sound Species Detector",
-		Description: "Deep learning model using CNN architectures to identify bird species from spectrograms of field recordings.",
-		Tags:        []string{"TensorFlow", "CNNs", "Python"},
-		Highlight:   "90% accuracy",
+		Description: "Built an AI system to classify bird species from audio clips using spectrogram analysis and CNNs.",
+		Tags:        []string{"Python", "TensorFlow", "CNNs", "Spectrogram Analysis"},
+		Highlight:   "90%+ accuracy",
 	},
 	{
 		Title:       "ISRO LEOS — Sim-to-Real Vision",
-		Description: "Built a synthetic satellite imagery data factory and deployed YOLOv7 object detection on NVIDIA Jetson for real-time inference.",
-		Tags:        []string{"YOLOv7", "Jetson", "Synthetic Data", "Python"},
+		Description: "Synthetic data generation using BlenderProc for 6,000+ high-fidelity satellite images with COCO/RILE annotations. Trained YOLOv7+Segmentation model and deployed on NVIDIA Jetson using TensorRT, achieving 22 FPS. Implemented GAN-based style transfer using Unreal Engine 5.",
+		Tags:        []string{"BlenderProc", "YOLOv7", "TensorRT", "NVIDIA Jetson", "Unreal Engine 5"},
 		Highlight:   "22 FPS real-time",
 	},
 }
