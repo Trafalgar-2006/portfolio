@@ -1,93 +1,122 @@
-# SSH Portfolio — Mohith Akshay Duggirala
+# ssh-portfolio
 
-A beautiful SSH-based TUI portfolio built with Go + [Charm](https://charm.sh/) ecosystem.
-
-## 🌐 Live Demo
+> An interactive TUI portfolio served over raw SSH. No browser. No JavaScript. No loading spinners.
 
 ```bash
-ssh trolley.proxy.rlwy.net -p 23115
+ssh trolley.proxy.rlwy.net -p 41074
 ```
 
-## ✨ Features
+---
 
-- **Interactive TUI** — Navigate with keyboard (arrow keys, enter, esc)
-- **SSH Accessible** — Anyone can view your portfolio via `ssh`
-- **Beautiful Design** — Braille art, color palette, ASCII name banner
-- **Docker Ready** — One-command deployment
+## What visitors see
 
-## 🚀 Quick Start
+1. **Matrix rain** — katakana + digits fall across the full terminal
+2. **Name solidification** — ASCII name crystallises out of the chaos, cell by cell
+3. **Boot sequence** — fake SSH handshake, corrupted loading line, signal-lost recovery
+4. **"Unauthorized Access" alert** — red full-screen warning → "just kidding. welcome. :)"
+5. **Home splash** — name glitch effect, typewriter tagline, live GitHub commit at the bottom
+6. **Projects** — cascade drop-in, [Live] badge pulse, tag pop in detail, colour-coded stack tags
+7. **About** — IST time-aware greeting that changes based on when you're reading it
+8. **Contacts** — stagger reveal, SSH line flash
 
-### Run Locally (no SSH)
+---
 
+## Stack
+
+| Layer | Tech |
+|---|---|
+| TUI framework | [Bubbletea](https://github.com/charmbracelet/bubbletea) |
+| SSH server | [Wish](https://github.com/charmbracelet/wish) + [charmbracelet/ssh](https://github.com/charmbracelet/ssh) |
+| Styling | [Lipgloss](https://github.com/charmbracelet/lipgloss) |
+| Deployment | [Railway](https://railway.app) (Docker) |
+| Keep-alive | UptimeRobot TCP monitor |
+
+---
+
+## Deployment (Railway)
+
+This project is deployed on Railway with a persistent SSH host key so the fingerprint never changes between redeploys.
+
+**Environment variables required:**
+
+| Variable | Value | Purpose |
+|---|---|---|
+| `SSH_ENABLED` | `true` | Enables SSH server mode |
+| `SSH_PORT` | `23234` | Internal SSH port (decoupled from Railway's `PORT`) |
+| `SSH_HOST_KEY` | base64-encoded private key | Persistent host key — prevents "REMOTE HOST CHANGED" warnings |
+| `COLORTERM` | `truecolor` | Forces 24-bit colour in SSH sessions |
+
+**Generate a persistent host key:**
 ```bash
-go run .
+ssh-keygen -t ed25519 -f host_key
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("host_key")) | clip
+# Paste the clipboard value into Railway as SSH_HOST_KEY
 ```
 
-### Run as SSH Server
+**Networking:**
+- HTTP health check → port `8080` (Railway's injected `PORT`)
+- SSH TCP proxy → internal `23234`, external `41074`
 
-```bash
-# Copy and edit the env file
-cp .env.example .env
+---
 
-# Set SSH_ENABLED=true in .env, then:
-go run .
+## Customization
 
-# In another terminal:
-ssh localhost -p 23234
+**Update content without redeploying:** edit `content.yaml`
+
+```yaml
+projects:
+  - title: "Your Project"
+    description: "What it does and why it matters."
+    tags: [Go, Python, Docker]
+    status: Live        # Live | WIP | Research
+    github: "github.com/you/repo"
+    highlight: "optional metric"  # shown as ⚡ highlight
+
+contacts:
+  - icon: "(@)"
+    label: "Email"
+    value: "you@example.com"
 ```
 
-### Deploy with Docker
+Push to `master` → Railway rebuilds automatically.
 
-```bash
-cp .env.example .env
-# Edit .env as needed
-docker-compose up --build
-```
+**Change bio/about text:** edit `views/about.go`
+**Change ASCII name banner or portrait:** edit `views/home.go`
 
-## 🌐 Deployment Options
+---
 
-Since this is an SSH server, it needs a **persistent host** (not GitHub Pages/Vercel).
-
-### Fly.io (Recommended — Free Tier)
-```bash
-flyctl launch
-flyctl deploy
-```
-
-### Any VPS (DigitalOcean, Linode, Hetzner)
-```bash
-# On your server:
-git clone https://github.com/trafalgar-2006/ssh-portfolio.git
-cd ssh-portfolio
-docker-compose up -d --build
-```
-
-## 🎨 Customization
-
-Edit the view files in `views/` to change content:
-- `views/home.go` — Home screen, ASCII art, bio
-- `views/projects.go` — Your projects
-- `views/about.go` — About section
-- `views/contacts.go` — Contact links
-
-Edit `styles.go` to change colors and styling.
-
-## 🛠️ Tech Stack
-
-- **[Bubbletea](https://github.com/charmbracelet/bubbletea)** — TUI framework
-- **[Wish](https://github.com/charmbracelet/wish)** — SSH server middleware
-- **[Lipgloss](https://github.com/charmbracelet/lipgloss)** — Terminal styling
-
-## 📋 Controls
+## Controls
 
 | Key | Action |
 |---|---|
-| `← →` | Switch tabs |
+| `← →` or `h l` | Switch tabs on home screen |
 | `Enter` | Open selected tab |
-| `↑ ↓` | Browse projects |
-| `Esc` | Go back |
-| `q` | Quit |
+| `↑ ↓` or `j k` | Browse projects |
+| `Esc` or `q` | Go back / quit |
 
-## 📄 License
+---
+
+## Architecture
+
+```
+main.go          — dual-port setup: SSH on SSH_PORT, HTTP health on 8080
+model.go         — single global 50ms ticker drives all animations
+views/
+  matrix.go      — matrix rain renderer (grouped ANSI segments for SSH efficiency)
+  boot.go        — SSH handshake + corrupted recovery boot sequence
+  alert.go       — "unauthorized access" fake alert
+  home.go        — splash screen, typewriter, name glitch, banner reveal
+  projects.go    — cascade, tag pop, live pulse, YAML loader
+  about.go       — IST time-based greeting, experience timeline
+  contacts.go    — stagger reveal, SSH line flash
+config/
+  loader.go      — YAML parser for content.yaml
+content.yaml     — all projects and contacts (edit this, not Go files)
+entrypoint.sh    — decodes SSH_HOST_KEY env var → persistent key at startup
+```
+
+---
+
+## License
 
 MIT
