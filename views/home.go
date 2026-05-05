@@ -66,12 +66,15 @@ var starPositions = []struct {
 	{1, 5, "✦"},
 }
 
+// TaglineText is the full tagline revealed by the typewriter animation.
+const TaglineText = "is an engineer, builder & creator who turns ideas into products."
+
 // BannerLines returns the number of lines in the name banner for the animation ticker.
 func BannerLines() int {
 	return len(nameBanner)
 }
 
-func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, blink bool) string {
+func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, blink bool, taglineIdx int, taglineDone bool, cursorBlink bool) string {
 	cyanStyle     := r.NewStyle().Foreground(lipgloss.Color("#00DFDF"))
 	dimStyle      := r.NewStyle().Foreground(lipgloss.Color("#888888"))
 	whiteStyle    := r.NewStyle().Foreground(lipgloss.Color("#E0E0E0"))
@@ -141,6 +144,20 @@ func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, blink bool) 
 	rightCol.WriteString("\n")
 
 	// Bio text — right side
+	// Tagline (typewriter)
+	if revealIdx >= len(nameBanner) {
+		visible := []rune(TaglineText)[:taglineIdx]
+		cursor := ""
+		if taglineIdx < len([]rune(TaglineText)) {
+			cursor = "█"
+		} else if cursorBlink {
+			cursor = "█"
+		}
+		rightCol.WriteString("  " + whiteStyle.Render(string(visible)+cursor) + "\n")
+	} else {
+		rightCol.WriteString("\n")
+	}
+
 	bioLines := []string{
 		whiteStyle.Render("is an engineer, builder &"),
 		whiteStyle.Render("creator who turns ideas"),

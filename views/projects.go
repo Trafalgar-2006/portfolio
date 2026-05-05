@@ -139,7 +139,7 @@ func statusStyle(r *lipgloss.Renderer, status string) string {
 	}
 }
 
-func RenderProjects(r *lipgloss.Renderer, width, height, cursor, scroll int) string {
+func RenderProjects(r *lipgloss.Renderer, width, height, cursor, scroll, projectsReveal, tagPopReveal int, livePulse bool) string {
 	goldStyle        := r.NewStyle().Foreground(lipgloss.Color("#FFD700")).Bold(true)
 	descStyle        := r.NewStyle().Foreground(lipgloss.Color("#E0E0E0"))
 	greenStyle       := r.NewStyle().Foreground(lipgloss.Color("#50FA7B")).Bold(true)
@@ -163,6 +163,11 @@ func RenderProjects(r *lipgloss.Renderer, width, height, cursor, scroll int) str
 	}
 
 	for i, p := range AllProjects {
+		// Cascade: only show up to projectsReveal
+		if i >= projectsReveal {
+			b.WriteString("\n")
+			continue
+		}
 		isSelected := i == cursor
 		num := fmt.Sprintf("%02d", i+1)
 
@@ -173,15 +178,24 @@ func RenderProjects(r *lipgloss.Renderer, width, height, cursor, scroll int) str
 			prefix = unselectedBorder.Render("  ")
 		}
 
-		// Title + status badge
+		// Title line
 		titleLine := prefix + dimStyle.Render(num+". ") + goldStyle.Render(p.Title)
-		titleLine += "  " + statusStyle(r, p.Status)
+
+		// Status badge with [Live] pulse
+		if p.Status == "Live" {
+			if livePulse {
+				titleLine += "  " + r.NewStyle().Foreground(lipgloss.Color("#50FA7B")).Bold(true).Render("[Live]")
+			} else {
+				titleLine += "  " + r.NewStyle().Foreground(lipgloss.Color("#2A7A4A")).Bold(true).Render("[Live]")
+			}
+		} else {
+			titleLine += "  " + statusStyle(r, p.Status)
+		}
 		if p.Highlight != "" {
 			titleLine += "  " + greenStyle.Render("⚡ "+p.Highlight)
 		}
 		b.WriteString(" " + titleLine + "\n")
 
-		// Expanded detail for selected project
 		if isSelected {
 			desc := wrapText(p.Description, contentWidth-6)
 			for _, line := range strings.Split(desc, "\n") {
@@ -194,13 +208,21 @@ func RenderProjects(r *lipgloss.Renderer, width, height, cursor, scroll int) str
 			}
 		}
 
-		// Color-coded tags
+		// Tags — pop in one by one for selected, all at once for others
 		var tags []string
-		for _, t := range p.Tags {
+		showCount := len(p.Tags)
+		if isSelected {
+			showCount = tagPopReveal
+			if showCount > len(p.Tags) { showCount = len(p.Tags) }
+		}
+		for _, t := range p.Tags[:showCount] {
 			tagS := r.NewStyle().Foreground(tagColor(t))
 			tags = append(tags, tagS.Render("["+t+"]"))
 		}
-		b.WriteString("     " + strings.Join(tags, " ") + "\n\n")
+		if len(tags) > 0 {
+			b.WriteString("     " + strings.Join(tags, " ") + "\n")
+		}
+		b.WriteString("\n")
 	}
 
 	b.WriteString(" " + dimStyle.Render("[↑↓ browse · enter selects · esc back]") + "\n")

@@ -2,6 +2,7 @@ package views
 
 import (
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/lipgloss"
 )
@@ -19,6 +20,25 @@ func RenderAbout(r *lipgloss.Renderer, width, height int) string {
 
 	var b strings.Builder
 	b.WriteString("\n")
+
+	// Self-aware time-based greeting (IST)
+	ist := time.FixedZone("IST", 5*60*60+30*60)
+	hour := time.Now().In(ist).Hour()
+	var timeGreeting string
+	switch {
+	case hour >= 2 && hour < 5:
+		timeGreeting = "you're up late. so am I, probably."
+	case hour >= 5 && hour < 9:
+		timeGreeting = "early start. respect."
+	case hour >= 9 && hour < 18:
+		timeGreeting = "currently probably in class or debugging something."
+	case hour >= 18 && hour < 22:
+		timeGreeting = "golden hours. this is when the best code gets written."
+	default:
+		timeGreeting = "late night build session energy in here."
+	}
+	b.WriteString("  " + dimStyle.Italic(true).Render(timeGreeting) + "\n\n")
+
 	b.WriteString(" " + cyanStyle.Bold(true).Render("✦ About") + "\n")
 	b.WriteString(divider + "\n\n")
 

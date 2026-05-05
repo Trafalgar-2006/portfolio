@@ -37,7 +37,7 @@ func loadContactsFromConfig() {
 	AllContacts = contacts
 }
 
-func RenderContacts(r *lipgloss.Renderer, width, height int) string {
+func RenderContacts(r *lipgloss.Renderer, width, height, contactsReveal, sshFlash int) string {
 	cyanStyle  := r.NewStyle().Foreground(lipgloss.Color("#00DFDF"))
 	dimStyle   := r.NewStyle().Foreground(lipgloss.Color("#888888"))
 	whiteStyle := r.NewStyle().Foreground(lipgloss.Color("#E0E0E0"))
@@ -52,14 +52,24 @@ func RenderContacts(r *lipgloss.Renderer, width, height int) string {
 
 	b.WriteString("  " + dimStyle.Render("Let's connect! Feel free to reach out.") + "\n\n")
 
-	for _, c := range AllContacts {
+	for i, c := range AllContacts {
+		// Stagger reveal: only show up to contactsReveal entries
+		if i >= contactsReveal {
+			b.WriteString("\n\n")
+			continue
+		}
 		b.WriteString("  " + c.Icon + "  " + goldStyle.Bold(true).Render(c.Label) + "\n")
 		b.WriteString("     " + linkStyle.Render(c.Value) + "\n\n")
 	}
 
 	// Fun SSH note
 	b.WriteString(divider + "\n\n")
-	b.WriteString("  " + whiteStyle.Render("You're viewing this over ") + cyanStyle.Bold(true).Render("SSH") + whiteStyle.Render("!") + "\n")
+	// SSH note — flashes bright cyan on first load
+	sshLine := whiteStyle.Render("You're viewing this over ") + cyanStyle.Bold(true).Render("SSH") + whiteStyle.Render("!")
+	if sshFlash > 0 && sshFlash%2 == 0 {
+		sshLine = r.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Bold(true).Render("You're viewing this over SSH! ✦")
+	}
+	b.WriteString("  " + sshLine + "\n")
 	b.WriteString("  " + dimStyle.Render("Built with Go + Bubbletea + Wish") + "\n")
 	b.WriteString("  " + dimStyle.Render("github.com/trafalgar-2006/ssh-portfolio") + "\n\n")
 
