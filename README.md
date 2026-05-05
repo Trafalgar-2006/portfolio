@@ -2,8 +2,10 @@
 
 A beautiful SSH-based TUI portfolio built with Go + [Charm](https://charm.sh/) ecosystem.
 
-```
-ssh your-domain.com -p 23234
+## 🌐 Live Demo
+
+```bash
+ssh trolley.proxy.rlwy.net -p 23115
 ```
 
 ## ✨ Features
