@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/trafalgar-2006/ssh-portfolio/config"
 )
 
 type Contact struct {
@@ -17,6 +18,23 @@ var AllContacts = []Contact{
 	{Icon: "(~)", Label: "Website", Value: "webcraftstudios.co.in"},
 	{Icon: "(in)", Label: "LinkedIn", Value: "linkedin.com/in/dmohithakshay"},
 	{Icon: "(gh)", Label: "GitHub", Value: "github.com/trafalgar-2006"},
+}
+
+// loadContactsFromConfig overwrites AllContacts from the YAML config.
+// Called by LoadFromConfig() in projects.go after config is loaded.
+func loadContactsFromConfig() {
+	if config.Loaded == nil || len(config.Loaded.Contacts) == 0 {
+		return
+	}
+	var contacts []Contact
+	for _, c := range config.Loaded.Contacts {
+		contacts = append(contacts, Contact{
+			Icon:  c.Icon,
+			Label: c.Label,
+			Value: c.Value,
+		})
+	}
+	AllContacts = contacts
 }
 
 func RenderContacts(r *lipgloss.Renderer, width, height int) string {

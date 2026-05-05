@@ -18,9 +18,18 @@ import (
 	"github.com/charmbracelet/wish/activeterm"
 	"github.com/charmbracelet/wish/bubbletea"
 	"github.com/charmbracelet/wish/logging"
+	"github.com/trafalgar-2006/ssh-portfolio/config"
+	"github.com/trafalgar-2006/ssh-portfolio/views"
 )
 
 func main() {
+	// Load content.yaml — falls back to hardcoded data if file not found
+	if err := config.Load("content.yaml"); err != nil {
+		log.Printf("content.yaml not found, using hardcoded content: %v", err)
+	} else {
+		views.LoadFromConfig()
+	}
+
 	sshEnabled := os.Getenv("SSH_ENABLED")
 	if sshEnabled == "" {
 		sshEnabled = "false"

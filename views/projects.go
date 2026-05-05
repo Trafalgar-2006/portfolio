@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/trafalgar-2006/ssh-portfolio/config"
 )
 
 type Project struct {
@@ -70,7 +71,30 @@ var AllProjects = []Project{
 	},
 }
 
-// tagColor returns a color based on the technology category
+// LoadFromConfig overwrites AllProjects and AllContacts from the loaded YAML config.
+// Called at startup if content.yaml was found. Falls back to hardcoded data if not.
+func LoadFromConfig() {
+	if config.Loaded == nil {
+		return
+	}
+	var projects []Project
+	for _, p := range config.Loaded.Projects {
+		projects = append(projects, Project{
+			Title:       p.Title,
+			Description: p.Description,
+			Tags:        p.Tags,
+			Status:      p.Status,
+			GitHubURL:   p.GitHubURL,
+			Highlight:   p.Highlight,
+		})
+	}
+	if len(projects) > 0 {
+		AllProjects = projects
+	}
+	loadContactsFromConfig()
+}
+
+
 func tagColor(tag string) lipgloss.Color {
 	langs := map[string]bool{
 		"Python": true, "Go": true, "JavaScript": true, "TypeScript": true,

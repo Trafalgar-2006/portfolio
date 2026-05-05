@@ -1,0 +1,58 @@
+projects:
+  - title: "EmbedGen — Embedded Systems LLM"
+    description: "Custom LLM fine-tuned on embedded-systems codebases using LoRA adapters. Quantized to GGUF for deployment on edge devices. Trained on RTX A6000 at Manipal research lab."
+    tags: [Python, PyTorch, LoRA, GGUF, CUDA]
+    status: WIP
+    github: "github.com/trafalgar-2006/EmbedGen"
+
+  - title: "ISRO LEOS — Sim-to-Real Vision"
+    description: "Synthetic data generation using BlenderProc for 6,000+ satellite images with COCO annotations. YOLOv7+Segmentation on NVIDIA Jetson via TensorRT. GAN-based style transfer with Unreal Engine 5."
+    tags: [BlenderProc, YOLOv7, TensorRT, Python, OpenCV]
+    highlight: "22 FPS real-time"
+    status: Research
+    github: ""
+
+  - title: "Autonomous Trading System"
+    description: "AI-driven swing trader with market-wide signal generation, paper trading via Alpaca API, risk management, and automated order execution. Deployed on Oracle Cloud Always Free tier."
+    tags: [Python, SQLite, "Alpaca API", "Oracle Cloud"]
+    status: Live
+    github: "github.com/trafalgar-2006/trading-agent"
+
+  - title: "Webcraft Studios Platform"
+    description: "Full digital agency platform with SEO-driven architecture, scalable AI pipelines, and performance-optimized delivery for global client base."
+    tags: [React, Node.js, MongoDB, AWS, Python]
+    status: Live
+    github: ""
+
+  - title: "Bird Sound Species Detector"
+    description: "CNN-based audio classifier for bird species identification using spectrogram analysis. Trained on a custom dataset."
+    tags: [Python, TensorFlow, CNNs]
+    highlight: "90%+ accuracy"
+    status: Research
+    github: ""
+
+  - title: "Frog Call Classifier"
+    description: "ML pipeline for frog species identification across 803+ species using MFCC-based feature extraction from environmental audio recordings."
+    tags: [Python, Librosa, Scikit-learn]
+    status: Research
+    github: ""
+
+  - title: "SSH Portfolio (this one)"
+    description: "This portfolio — an interactive TUI accessible over SSH from anywhere in the world. Auto-deploys from GitHub via Railway."
+    tags: [Go, Docker, Railway]
+    status: Live
+    github: "github.com/trafalgar-2006/portflio"
+
+contacts:
+  - icon: "(@)"
+    label: "Email"
+    value: "d.mohithakshay@gmail.com"
+  - icon: "(~)"
+    label: "Website"
+    value: "webcraftstudios.co.in"
+  - icon: "(in)"
+    label: "LinkedIn"
+    value: "linkedin.com/in/dmohithakshay"
+  - icon: "(gh)"
+    label: "GitHub"
+    value: "github.com/trafalgar-2006"
