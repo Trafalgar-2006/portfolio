@@ -66,7 +66,12 @@ var starPositions = []struct {
 	{1, 5, "✦"},
 }
 
-func RenderHome(r *lipgloss.Renderer, width, height int) string {
+// BannerLines returns the number of lines in the name banner for the animation ticker.
+func BannerLines() int {
+	return len(nameBanner)
+}
+
+func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, blink bool) string {
 	cyanStyle     := r.NewStyle().Foreground(lipgloss.Color("#00DFDF"))
 	dimStyle      := r.NewStyle().Foreground(lipgloss.Color("#888888"))
 	whiteStyle    := r.NewStyle().Foreground(lipgloss.Color("#E0E0E0"))
@@ -80,27 +85,55 @@ func RenderHome(r *lipgloss.Renderer, width, height int) string {
 		maxContentWidth = 60
 	}
 
-	// Left column: portrait art
+	// Left column: portrait art — reveals at 2× banner speed
 	portraitWidth := 50
+	portReveal := revealIdx * 2
+	if portReveal > len(portraitArt) {
+		portReveal = len(portraitArt)
+	}
 	var leftCol strings.Builder
-	for _, line := range portraitArt {
-		leftCol.WriteString(cyanStyle.Render(line))
+	for i, line := range portraitArt {
+		if i < portReveal {
+			leftCol.WriteString(cyanStyle.Render(line))
+		} else {
+			// Hold space so layout doesn't jump
+			visLen := len([]rune(stripAnsi(line)))
+			if visLen < 1 { visLen = 1 }
+			leftCol.WriteString(strings.Repeat(" ", visLen))
+		}
 		leftCol.WriteString("\n")
 	}
 
 	// Right column: name + bio info
 	var rightCol strings.Builder
 
-	// Stars decoration at top
-	rightCol.WriteString(starStyle.Render("    ✧") + brightStarStyle.Render("*") + starStyle.Render("·✦") + "\n")
+	// Stars decoration at top — blink on slow tick
+	if blink {
+		rightCol.WriteString(starStyle.Render("    ✧") + brightStarStyle.Render("*") + starStyle.Render("·✦") + "\n")
+	} else {
+		rightCol.WriteString(starStyle.Render("    · ") + brightStarStyle.Render("✦") + starStyle.Render("·· ") + "\n")
+	}
 	rightCol.WriteString(starStyle.Render(" +") + "     " + starStyle.Render("*") + "\n")
 	rightCol.WriteString("\n")
 
-	// Name banner
-	for _, line := range nameBanner {
-		rightCol.WriteString(cyanStyle.Render(line) + "\n")
+	// Name banner — reveal one line per tick
+	visibleBanner := revealIdx
+	if visibleBanner > len(nameBanner) {
+		visibleBanner = len(nameBanner)
 	}
-	rightCol.WriteString(magentaStyle.Render("  ·  D U G G I R A L A  ·") + "\n")
+	for i, line := range nameBanner {
+		if i < visibleBanner {
+			rightCol.WriteString(cyanStyle.Render(line) + "\n")
+		} else {
+			rightCol.WriteString("\n") // hold space
+		}
+	}
+	// DUGGIRALA subtitle — only after banner fully revealed
+	if revealIdx >= len(nameBanner) {
+		rightCol.WriteString(magentaStyle.Render("  ·  D U G G I R A L A  ·") + "\n")
+	} else {
+		rightCol.WriteString("\n")
+	}
 	rightCol.WriteString("\n")
 
 	// Stars

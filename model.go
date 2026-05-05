@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/trafalgar-2006/ssh-portfolio/views"
@@ -19,16 +21,27 @@ const (
 // Tab names for navigation
 var tabNames = []string{"Projects", "About", "Contacts"}
 
+// tickMsg is sent by the animation ticker
+type tickMsg time.Time
+
+func tickCmd(d time.Duration) tea.Cmd {
+	return tea.Tick(d, func(t time.Time) tea.Msg {
+		return tickMsg(t)
+	})
+}
+
 // Model is the main Bubbletea model
 type Model struct {
 	renderer      *lipgloss.Renderer
 	width         int
 	height        int
 	currentView   View
-	activeTab     int // 0=Projects, 1=About, 2=Contacts, 3=Resume
+	activeTab     int
 	projectCursor int
 	projectScroll int
 	quitting      bool
+	revealIdx     int  // animation: how many banner lines are revealed
+	blink         bool // animation: star blink state
 }
 
 // NewModel creates a new model. Pass nil to use the default renderer (local TUI mode).
@@ -42,17 +55,28 @@ func NewModel(r *lipgloss.Renderer) Model {
 		height:      40,
 		currentView: ViewHome,
 		activeTab:   0,
+		revealIdx:   0,
 	}
 }
 
-// Init implements tea.Model
+// Init implements tea.Model — starts the intro animation ticker
 func (m Model) Init() tea.Cmd {
-	return nil
+	return tickCmd(time.Millisecond * 55)
 }
 
 // Update implements tea.Model
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tickMsg:
+		_ = msg
+		if m.revealIdx < views.BannerLines() {
+			m.revealIdx++
+			return m, tickCmd(time.Millisecond * 55)
+		}
+		// Animation done — slow blink tick for decorative stars
+		m.blink = !m.blink
+		return m, tickCmd(time.Millisecond * 600)
+
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
@@ -69,7 +93,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.quitting = true
 				return m, tea.Quit
 			}
-			// Go back to home
 			m.currentView = ViewHome
 			return m, nil
 
@@ -145,7 +168,7 @@ func (m Model) View() string {
 
 	switch m.currentView {
 	case ViewHome:
-		content = views.RenderHome(m.renderer, m.width, m.height)
+		content = views.RenderHome(m.renderer, m.width, m.height, m.revealIdx, m.blink)
 		content += m.renderTabBar()
 	case ViewProjects:
 		content = views.RenderProjects(m.renderer, m.width, m.height, m.projectCursor, m.projectScroll)
