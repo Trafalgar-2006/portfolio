@@ -49,15 +49,15 @@ var AllProjects = []Project{
 	},
 }
 
-func RenderProjects(width, height, cursor, scroll int) string {
-	goldStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFD700")).Bold(true)
-	descStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#E0E0E0"))
-	tagStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#BD93F9"))
-	greenStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#50FA7B")).Bold(true)
-	cyanStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#00DFDF"))
-	dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#888888"))
-	selectedBorder := lipgloss.NewStyle().Foreground(lipgloss.Color("#00DFDF"))
-	unselectedBorder := lipgloss.NewStyle().Foreground(lipgloss.Color("#444444"))
+func RenderProjects(r *lipgloss.Renderer, width, height, cursor, scroll int) string {
+	goldStyle      := r.NewStyle().Foreground(lipgloss.Color("#FFD700")).Bold(true)
+	descStyle      := r.NewStyle().Foreground(lipgloss.Color("#E0E0E0"))
+	tagStyle       := r.NewStyle().Foreground(lipgloss.Color("#BD93F9"))
+	greenStyle     := r.NewStyle().Foreground(lipgloss.Color("#50FA7B")).Bold(true)
+	cyanStyle      := r.NewStyle().Foreground(lipgloss.Color("#00DFDF"))
+	dimStyle       := r.NewStyle().Foreground(lipgloss.Color("#888888"))
+	selectedBorder := r.NewStyle().Foreground(lipgloss.Color("#00DFDF"))
+	unselectedBorder := r.NewStyle().Foreground(lipgloss.Color("#444444"))
 
 	var b strings.Builder
 

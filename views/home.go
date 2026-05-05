@@ -73,13 +73,13 @@ var starPositions = []struct {
 	{1, 5, "✦"},
 }
 
-func RenderHome(width, height int) string {
-	cyanStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#00DFDF"))
-	dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#888888"))
-	whiteStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#E0E0E0"))
-	magentaStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FF6AC1"))
-	starStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#888888"))
-	brightStarStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#00DFDF"))
+func RenderHome(r *lipgloss.Renderer, width, height int) string {
+	cyanStyle     := r.NewStyle().Foreground(lipgloss.Color("#00DFDF"))
+	dimStyle      := r.NewStyle().Foreground(lipgloss.Color("#888888"))
+	whiteStyle    := r.NewStyle().Foreground(lipgloss.Color("#E0E0E0"))
+	magentaStyle  := r.NewStyle().Foreground(lipgloss.Color("#FF6AC1"))
+	starStyle     := r.NewStyle().Foreground(lipgloss.Color("#888888"))
+	brightStarStyle := r.NewStyle().Foreground(lipgloss.Color("#00DFDF"))
 
 	// Calculate available space
 	maxContentWidth := width - 4

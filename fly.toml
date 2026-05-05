@@ -1,0 +1,23 @@
+# fly.toml — SSH Portfolio by Mohith Akshay Duggirala
+app = "mohith-ssh-portfolio"
+primary_region = "sin" # Singapore — closest to India
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  SSH_ENABLED = "true"
+  PORT = "23234"
+  HOST = "0.0.0.0"
+
+# SSH is TCP, not HTTP — use a TCP service
+[[services]]
+  protocol = "tcp"
+  internal_port = 23234
+
+  [[services.ports]]
+    port = 23234
+
+[mounts]
+  source = "ssh_keys"
+  destination = "/app/.ssh"

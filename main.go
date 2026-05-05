@@ -34,7 +34,7 @@ func main() {
 
 func runLocalTUI() {
 	p := tea.NewProgram(
-		NewModel(),
+		NewModel(nil),
 		tea.WithAltScreen(),
 		tea.WithMouseCellMotion(),
 	)
@@ -89,7 +89,8 @@ func runSSHServer() {
 }
 
 func teaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
-	m := NewModel()
+	renderer := bubbletea.MakeRenderer(s)
+	m := NewModel(renderer)
 	return m, []tea.ProgramOption{
 		tea.WithAltScreen(),
 		tea.WithMouseCellMotion(),

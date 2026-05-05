@@ -6,16 +6,16 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func RenderResume(width, height int) string {
-	cyanStyle   := lipgloss.NewStyle().Foreground(lipgloss.Color("#00DFDF"))
-	goldStyle   := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFD700"))
-	magentaStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FF6AC1"))
-	greenStyle  := lipgloss.NewStyle().Foreground(lipgloss.Color("#50FA7B"))
-	purpleStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#BD93F9"))
-	dimStyle    := lipgloss.NewStyle().Foreground(lipgloss.Color("#888888"))
-	whiteStyle  := lipgloss.NewStyle().Foreground(lipgloss.Color("#E0E0E0"))
-	orangeStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFB86C"))
-	divider     := dimStyle.Render("  ──────────────────────────────────────────────────")
+func RenderResume(r *lipgloss.Renderer, width, height int) string {
+	cyanStyle    := r.NewStyle().Foreground(lipgloss.Color("#00DFDF"))
+	goldStyle    := r.NewStyle().Foreground(lipgloss.Color("#FFD700"))
+	magentaStyle := r.NewStyle().Foreground(lipgloss.Color("#FF6AC1"))
+	greenStyle   := r.NewStyle().Foreground(lipgloss.Color("#50FA7B"))
+	purpleStyle  := r.NewStyle().Foreground(lipgloss.Color("#BD93F9"))
+	dimStyle     := r.NewStyle().Foreground(lipgloss.Color("#888888"))
+	whiteStyle   := r.NewStyle().Foreground(lipgloss.Color("#E0E0E0"))
+	orangeStyle  := r.NewStyle().Foreground(lipgloss.Color("#FFB86C"))
+	divider      := dimStyle.Render("  ──────────────────────────────────────────────────")
 
 	var b strings.Builder
 	b.WriteString("\n")

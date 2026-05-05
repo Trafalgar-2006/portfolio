@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/trafalgar-2006/ssh-portfolio/views"
 )
 
@@ -21,18 +22,23 @@ var tabNames = []string{"Projects", "About", "Contacts", "Resume"}
 
 // Model is the main Bubbletea model
 type Model struct {
+	renderer      *lipgloss.Renderer
 	width         int
 	height        int
 	currentView   View
-	activeTab     int // 0=Projects, 1=About, 2=Contacts
+	activeTab     int // 0=Projects, 1=About, 2=Contacts, 3=Resume
 	projectCursor int
 	projectScroll int
 	quitting      bool
 }
 
-// NewModel creates a new model with defaults
-func NewModel() Model {
+// NewModel creates a new model. Pass nil to use the default renderer (local TUI mode).
+func NewModel(r *lipgloss.Renderer) Model {
+	if r == nil {
+		r = lipgloss.DefaultRenderer()
+	}
 	return Model{
+		renderer:    r,
 		width:       80,
 		height:      40,
 		currentView: ViewHome,
@@ -142,34 +148,40 @@ func (m Model) View() string {
 
 	switch m.currentView {
 	case ViewHome:
-		content = views.RenderHome(m.width, m.height)
+		content = views.RenderHome(m.renderer, m.width, m.height)
 		content += m.renderTabBar()
 	case ViewProjects:
-		content = views.RenderProjects(m.width, m.height, m.projectCursor, m.projectScroll)
+		content = views.RenderProjects(m.renderer, m.width, m.height, m.projectCursor, m.projectScroll)
 	case ViewAbout:
-		content = views.RenderAbout(m.width, m.height)
+		content = views.RenderAbout(m.renderer, m.width, m.height)
 	case ViewContacts:
-		content = views.RenderContacts(m.width, m.height)
+		content = views.RenderContacts(m.renderer, m.width, m.height)
 	case ViewResume:
-		content = views.RenderResume(m.width, m.height)
+		content = views.RenderResume(m.renderer, m.width, m.height)
 	}
 
 	return content
 }
 
-// renderTabBar renders the bottom navigation tabs
+// renderTabBar renders the bottom navigation tabs using the session renderer
 func (m Model) renderTabBar() string {
+	r := m.renderer
+	activeStyle   := r.NewStyle().Bold(true).Foreground(ColorCyan)
+	inactiveStyle := r.NewStyle().Foreground(ColorDimWhite)
+	hintStyle     := r.NewStyle().Foreground(ColorDimWhite).Italic(true)
+	sep           := "    "
+
 	var tabs []string
 	for i, name := range tabNames {
 		if i == m.activeTab {
-			tabs = append(tabs, ActiveTabStyle.Render("✦ "+name))
+			tabs = append(tabs, activeStyle.Render("✦ "+name))
 		} else {
-			tabs = append(tabs, InactiveTabStyle.Render(name))
+			tabs = append(tabs, inactiveStyle.Render(name))
 		}
 	}
 
-	tabBar := "\n " + joinStrings(tabs, TabSeparator.String()) + "\n"
-	tabBar += "\n " + HintStyle.Render("[← → to select · enter to open · q to quit]") + "\n"
+	tabBar := "\n " + joinStrings(tabs, sep) + "\n"
+	tabBar += "\n " + hintStyle.Render("[← → to select · enter to open · q to quit]") + "\n"
 
 	return tabBar
 }

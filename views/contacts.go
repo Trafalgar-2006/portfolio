@@ -19,13 +19,13 @@ var AllContacts = []Contact{
 	{Icon: "🐙", Label: "GitHub", Value: "github.com/trafalgar-2006"},
 }
 
-func RenderContacts(width, height int) string {
-	cyanStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#00DFDF"))
-	dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#888888"))
-	whiteStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#E0E0E0"))
-	goldStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFD700"))
-	linkStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#E0E0E0")).Underline(true)
-	divider := dimStyle.Render("  ─────────────────────────────────────────")
+func RenderContacts(r *lipgloss.Renderer, width, height int) string {
+	cyanStyle  := r.NewStyle().Foreground(lipgloss.Color("#00DFDF"))
+	dimStyle   := r.NewStyle().Foreground(lipgloss.Color("#888888"))
+	whiteStyle := r.NewStyle().Foreground(lipgloss.Color("#E0E0E0"))
+	goldStyle  := r.NewStyle().Foreground(lipgloss.Color("#FFD700"))
+	linkStyle  := r.NewStyle().Foreground(lipgloss.Color("#E0E0E0")).Underline(true)
+	divider    := dimStyle.Render("  ─────────────────────────────────────────")
 
 	var b strings.Builder
 	b.WriteString("\n")
