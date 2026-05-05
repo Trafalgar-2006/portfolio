@@ -21,6 +21,8 @@ COPY --from=builder /app/ssh-portfolio .
 COPY --from=builder /app/.ssh .ssh/
 
 ENV SSH_ENABLED=true
+ENV COLORTERM=truecolor
+ENV TERM=xterm-256color
 EXPOSE 23234
 
 CMD ["./ssh-portfolio"]
