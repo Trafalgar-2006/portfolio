@@ -50,7 +50,7 @@ func runSSHServer() {
 	if host == "" {
 		host = "0.0.0.0"
 	}
-	port := os.Getenv("PORT")
+	port := os.Getenv("SSH_PORT")
 	if port == "" {
 		port = "23234"
 	}
