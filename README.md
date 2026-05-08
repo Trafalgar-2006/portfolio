@@ -14,8 +14,10 @@ mohith
 
 ```bash
 # Or connect directly (no install needed)
-ssh mohith.is-a.dev -p 41074
+ssh trolley.proxy.rlwy.net -p 41074
 ```
+
+<!-- TODO: switch above to `ssh mohith.is-a.dev -p 41074` once is-a-dev PR is merged -->
 
 ---
 
