@@ -2,8 +2,19 @@
 
 > An interactive TUI portfolio served over raw SSH. No browser. No JavaScript. No loading spinners.
 
+## 👾 Connect
+
 ```bash
-ssh trolley.proxy.rlwy.net -p 41074
+# One-time install — drops a `mohith` command on your machine
+curl -fsSL https://raw.githubusercontent.com/Trafalgar-2006/portfolio/master/install.sh | bash
+
+# Then just run anytime
+mohith
+```
+
+```bash
+# Or connect directly (no install needed)
+ssh mohith.is-a.dev -p 41074
 ```
 
 ---
@@ -29,6 +40,7 @@ ssh trolley.proxy.rlwy.net -p 41074
 | SSH server | [Wish](https://github.com/charmbracelet/wish) + [charmbracelet/ssh](https://github.com/charmbracelet/ssh) |
 | Styling | [Lipgloss](https://github.com/charmbracelet/lipgloss) |
 | Deployment | [Railway](https://railway.app) (Docker) |
+| Custom domain | `mohith.is-a.dev` (via [is-a.dev](https://is-a.dev)) |
 | Keep-alive | UptimeRobot TCP monitor |
 
 ---
