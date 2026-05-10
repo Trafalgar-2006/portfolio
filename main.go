@@ -21,6 +21,7 @@ import (
 	"github.com/charmbracelet/wish/logging"
 	"github.com/trafalgar-2006/ssh-portfolio/config"
 	"github.com/trafalgar-2006/ssh-portfolio/views"
+	gossh "golang.org/x/crypto/ssh"
 )
 
 //go:embed index.html
@@ -72,7 +73,12 @@ func runSSHServer() {
 		wish.WithAddress(net.JoinHostPort(host, port)),
 		wish.WithHostKeyPath(".ssh/id_ed25519"),
 		// Accept ALL connections — public portfolio, no auth needed
+		// WithPublicKeyAuth: clients that have SSH keys (Linux/Mac)
 		wish.WithPublicKeyAuth(func(_ ssh.Context, _ ssh.PublicKey) bool {
+			return true
+		}),
+		// WithKeyboardInteractiveAuth: clients with NO SSH keys (fresh Windows)
+		wish.WithKeyboardInteractiveAuth(func(_ ssh.Context, _ gossh.KeyboardInteractiveChallenge) bool {
 			return true
 		}),
 		wish.WithMiddleware(
