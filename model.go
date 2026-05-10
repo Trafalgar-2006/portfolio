@@ -51,9 +51,10 @@ type Model struct {
 	matrixNameY   int
 
 	// Boot animation
-	bootLines    []views.BootLine
-	bootSchedule []int
-	bootVisible  int
+	bootLines     []views.BootLine
+	bootSchedule  []int
+	bootVisible   int
+	bootStartTick int // tickCount when ViewBoot was entered
 
 	// Alert animation
 	alertPhase     int // 0=warning, 1=just kidding
@@ -274,21 +275,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// Phase 2 → boot after 10 ticks (500ms)
 			if m.matrixPhase == 2 && m.tickCount >= 40+len(views.NameBannerLines())*6/6+10 {
 				m.currentView = ViewBoot
+				m.bootStartTick = m.tickCount // record when boot screen starts
 			}
 			return m, tickCmd()
 		}
 
 		// ── Boot sequence ──────────────────────────────────────────
 		if m.currentView == ViewBoot {
-			// Reveal lines based on schedule
+			// Use elapsed ticks since boot screen appeared — NOT absolute tickCount
+			// (tickCount is already ~70+ when boot starts, so all schedule entries
+			//  would fire instantly if we compared against raw tickCount)
+			elapsedBoot := m.tickCount - m.bootStartTick
 			for i, scheduledTick := range m.bootSchedule {
-				if m.tickCount >= scheduledTick && i >= m.bootVisible {
+				if elapsedBoot >= scheduledTick && i >= m.bootVisible {
 					m.bootVisible = i + 1
 				}
 			}
 			// All lines shown + extra pause (10 ticks = 500ms) → go to alert
 			lastTick := m.bootSchedule[len(m.bootSchedule)-1]
-			if m.bootVisible >= len(m.bootLines) && m.tickCount >= lastTick+10 {
+			if m.bootVisible >= len(m.bootLines) && elapsedBoot >= lastTick+10 {
 				m.currentView = ViewAlert
 				m.alertPhase = 0
 				m.alertPhaseTick = m.tickCount
