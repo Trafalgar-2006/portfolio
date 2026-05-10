@@ -869,8 +869,22 @@
     @media (max-width: 480px) {
       body { font-size: 13px; }
 
-      /* ASCII/braille portrait doesn't scale to phone width — hide it */
-      .portrait-panel { display: none; }
+      /* Show portrait but scale it way down for phone screens */
+      .portrait-panel {
+        min-height: unset;
+        max-height: 260px;
+        overflow: hidden;
+        padding: 16px 12px;
+        align-items: flex-start;
+        justify-content: center;
+      }
+
+      /* Tiny font so the braille art fits in ~360px width */
+      #portrait-pre {
+        font-size: 4.5px !important;
+        line-height: 1.3;
+        letter-spacing: 0;
+      }
 
       .name-panel { padding: 20px 16px; }
       .name-pixel { font-size: clamp(16px, 5.5vw, 22px); }
