@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"embed"
 	"errors"
 	"fmt"
 	"log"
@@ -21,6 +22,9 @@ import (
 	"github.com/trafalgar-2006/ssh-portfolio/config"
 	"github.com/trafalgar-2006/ssh-portfolio/views"
 )
+
+//go:embed index.html
+var indexHTML embed.FS
 
 func main() {
 	// Load content.yaml — falls back to hardcoded data if file not found
@@ -80,14 +84,30 @@ func runSSHServer() {
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	// Health check HTTP server (Railway needs this to mark container healthy)
+	// HTTP server: web portfolio at / and health check at /health
 	go func() {
-		http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		mux := http.NewServeMux()
+
+		// Serve the web portfolio (index.html embedded in the binary)
+		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			data, err := indexHTML.ReadFile("index.html")
+			if err != nil {
+				http.Error(w, "portfolio not found", http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.Header().Set("Cache-Control", "public, max-age=3600")
+			w.Write(data)
+		})
+
+		// Health check for UptimeRobot / Railway
+		mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte("OK"))
 		})
-		log.Println("Health check listening on :8080")
-		http.ListenAndServe(":8080", nil)
+
+		log.Println("Web portfolio + health check listening on :8080")
+		http.ListenAndServe(":8080", mux)
 	}()
 
 	log.Printf("Starting SSH server on %s:%s", host, port)
