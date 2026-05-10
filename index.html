@@ -827,6 +827,95 @@
     .glitch {
       animation: glitch 5s infinite;
     }
+
+    /* ═══════════════════════════════════════════════════════
+       RESPONSIVE — TABLET (≤ 800px)
+       ═══════════════════════════════════════════════════════ */
+    @media (max-width: 800px) {
+      /* Name panel first, portrait below */
+      .portrait-panel { order: 2; min-height: 220px; }
+      .name-panel     { order: 1; }
+
+      /* Scale braille portrait to fit narrower viewport */
+      #portrait-pre {
+        font-size: clamp(5px, 1.4vw, 8px);
+        transform-origin: top center;
+      }
+
+      /* Tagline: stop the nowrap animation, let it flow */
+      .tagline {
+        white-space: normal;
+        width: 100% !important;
+        overflow: visible;
+        border-right: none;
+        animation: none;
+      }
+      .tagline.animate {
+        animation: none;
+        width: 100% !important;
+      }
+
+      /* SSH box — wrap long command on narrower screens */
+      .ssh-cmd-row { flex-wrap: wrap; }
+      .ssh-cmd-row > span:first-child {
+        word-break: break-all;
+        font-size: 11px;
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       RESPONSIVE — PHONE (≤ 480px)
+       ═══════════════════════════════════════════════════════ */
+    @media (max-width: 480px) {
+      body { font-size: 13px; }
+
+      /* ASCII/braille portrait doesn't scale to phone width — hide it */
+      .portrait-panel { display: none; }
+
+      .name-panel { padding: 20px 16px; }
+      .name-pixel { font-size: clamp(16px, 5.5vw, 22px); }
+      .surname    { font-size: 7px; letter-spacing: 3px; margin-bottom: 20px; }
+      .bio        { font-size: 11.5px; }
+      .last-pushed { font-size: 10px; }
+
+      /* Larger touch targets on tab bar */
+      .bottom-bar { padding: 0 4px; height: 50px; }
+      .tab-btn    { font-size: 11px; padding: 8px 10px; }
+
+      /* Boot & alert screens */
+      #boot-text   { font-size: 11px; line-height: 2; }
+      .alert-title { font-size: 12px; }
+      .alert-body  { font-size: 10px; }
+
+      /* Content sections */
+      #content-area { padding: 16px 14px; }
+      .sec-sub      { margin-bottom: 20px; }
+
+      /* Projects */
+      .proj-desc { font-size: 11.5px; }
+      .proj-hdr  { gap: 4px; }
+
+      /* SSH box in contacts */
+      .ssh-box { padding: 12px 14px; }
+      .ssh-cmd-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+      .ssh-cmd-row > span:first-child {
+        font-size: 10.5px;
+        word-break: break-all;
+      }
+      .ssh-copy-hint { margin-left: 0; font-size: 10px; }
+
+      /* Skills: 2-col grid on phone instead of auto-fill */
+      .skills-wrap { grid-template-columns: 1fr 1fr; gap: 12px; }
+
+      /* Experience entries */
+      .exp-role { font-size: 12px; }
+      .exp-co   { font-size: 11px; }
+      .exp-bullets li { font-size: 11px; }
+    }
   </style>
 </head>
 
