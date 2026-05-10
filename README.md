@@ -14,7 +14,7 @@ mohith
 
 ```bash
 # Or connect directly (no install needed)
-ssh mohith.is-a.dev -p 41074
+ssh ssh.mohith.is-a.dev -p 41074
 ```
 
 ---

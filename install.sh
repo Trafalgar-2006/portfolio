@@ -5,7 +5,7 @@
 set -e
 
 CMD_NAME="mohith"
-SSH_HOST="mohith.is-a.dev"
+SSH_HOST="ssh.mohith.is-a.dev"
 SSH_PORT="41074"
 INSTALL_DIR="/usr/local/bin"
 
@@ -58,5 +58,5 @@ fi
 # ── done ─────────────────────────────────────────────────────────────────────
 echo -e "${GREEN}${BOLD}  ✓ Done!${RESET}  Just run:  ${BOLD}${CMD_NAME}${RESET}"
 echo ""
-echo -e "  (or connect directly:  ${CYAN}ssh mohith.is-a.dev -p ${SSH_PORT}${RESET})"
+echo -e "  (or connect directly:  ${CYAN}ssh ssh.mohith.is-a.dev -p ${SSH_PORT}${RESET})"
 echo ""
