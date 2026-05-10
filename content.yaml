@@ -1,7 +1,7 @@
 projects:
   - title: "EmbedGen — Embedded Systems LLM"
-    description: "Fine-tuning a 7B-parameter LLM on 40GB of embedded-systems C/C++ codebases using LoRA adapters and custom instruction datasets. Quantized to GGUF (Q4_K_M) for deployment on microcontrollers and edge devices. Training runs on an RTX A6000 at Manipal's research lab — no cloud bill, no budget cap."
-    tags: [Python, PyTorch, LoRA, GGUF, CUDA]
+    description: "A from-scratch 62M-parameter transformer trained on 40GB of embedded-systems C/C++ codebases. Custom BPE tokeniser, multi-head attention, and autoregressive decoder — no pretrained weights. Quantized to GGUF (Q4_K_M) for deployment on microcontrollers and edge devices. Training runs on an RTX A6000 at Manipal's research lab."
+    tags: [Python, PyTorch, GGUF, CUDA, Transformers]
     status: WIP
     github: "github.com/trafalgar-2006/EmbedGen"
 
@@ -41,7 +41,7 @@ projects:
     description: "An interactive TUI portfolio served over raw SSH — no browser, no JavaScript, no loading spinner. Built in Go with Bubbletea and Wish. Features a matrix rain intro, fake SSH handshake boot sequence, typewriter animations, live GitHub commit feed, and tab transitions. Deployed on Railway with a persistent host key and UptimeRobot keep-alive. You're looking at it right now."
     tags: [Go, Bubbletea, Docker, Railway, Wish]
     status: Live
-    github: "github.com/trafalgar-2006/portflio"
+    github: "github.com/trafalgar-2006/portfolio"
 
 contacts:
   - icon: "(@)"

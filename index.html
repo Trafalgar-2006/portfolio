@@ -1039,7 +1039,7 @@
         <div class="ssh-box" onclick="copySSH(this)">
           <div class="ssh-note">You're viewing the web version. For the full experience:</div>
           <div class="ssh-cmd-row">
-            <span>$ ssh mohith.is-a.dev -p 41074</span>
+            <span>$ ssh ssh.mohith.is-a.dev -p 41074</span>
             <span class="ssh-copy-hint">[ click to copy ]</span>
           </div>
         </div>
@@ -1085,7 +1085,7 @@
 
     // ═══ BOOT ═══
     const bootLines = [
-      { t: 'Establishing SSH connection to mohith.is-a.dev:41074...', c: '' },
+      { t: 'Establishing SSH connection to ssh.mohith.is-a.dev:41074...', c: '' },
       { t: 'SSH-2.0-OpenSSH_9.6p1 Ubuntu-3ubuntu13.5', c: 'b-dim', d: 320 },
       { t: 'Server host key: ED25519 SHA256:7Kp2mXqRv...', c: 'b-dim', d: 580 },
       { t: '', c: '', d: 700 },
@@ -1320,7 +1320,7 @@
 
     // ═══ SSH COPY ═══
     function copySSH(el) {
-      navigator.clipboard.writeText('ssh mohith.is-a.dev -p 41074').then(() => {
+      navigator.clipboard.writeText('ssh ssh.mohith.is-a.dev -p 41074').then(() => {
         const h = el.querySelector('.ssh-copy-hint');
         h.textContent = '[ copied! ]'; h.style.color = 'var(--cyan)';
         el.style.animation = 'sshFlash 0.5s ease';
