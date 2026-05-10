@@ -1,6 +1,6 @@
 # ssh-portfolio
 
-> An interactive TUI portfolio served over raw SSH. No browser. No JavaScript. No loading spinners.
+> An interactive TUI portfolio served over raw SSH **and** a web version at [mohith.is-a.dev](https://mohith.is-a.dev). No frameworks. No loading spinners.
 
 ## 👾 Connect
 
@@ -39,9 +39,10 @@ ssh ssh.mohith.is-a.dev -p 41074
 | TUI framework | [Bubbletea](https://github.com/charmbracelet/bubbletea) |
 | SSH server | [Wish](https://github.com/charmbracelet/wish) + [charmbracelet/ssh](https://github.com/charmbracelet/ssh) |
 | Styling | [Lipgloss](https://github.com/charmbracelet/lipgloss) |
+| Web portfolio | Vanilla HTML/CSS/JS — embedded in Go binary via `go:embed` |
 | Deployment | [Railway](https://railway.app) (Docker) |
-| Custom domain | `mohith.is-a.dev` (via [is-a.dev](https://is-a.dev)) |
-| Keep-alive | UptimeRobot TCP monitor |
+| Custom domain | `mohith.is-a.dev` (web) · `ssh.mohith.is-a.dev` (SSH) via [is-a.dev](https://is-a.dev) |
+| Keep-alive | UptimeRobot HTTP + TCP monitor |
 
 ---
 
@@ -66,8 +67,9 @@ ssh-keygen -t ed25519 -f host_key
 ```
 
 **Networking:**
-- HTTP health check → port `8080` (Railway's injected `PORT`)
-- SSH TCP proxy → internal `23234`, external `41074`
+- Web portfolio (index.html, embedded) → `https://mohith.is-a.dev` via port `8080`
+- HTTP health check → `https://mohith.is-a.dev/health` (UptimeRobot keep-alive)
+- SSH TCP proxy → internal `23234`, external `41074` (`ssh.mohith.is-a.dev`)
 
 ---
 
@@ -111,7 +113,7 @@ Push to `master` → Railway rebuilds automatically.
 ## Architecture
 
 ```
-main.go          — dual-port setup: SSH on SSH_PORT, HTTP health on 8080
+main.go          — dual-port: SSH on SSH_PORT + HTTP server (web portfolio + health) on 8080
 model.go         — single global 50ms ticker drives all animations
 views/
   matrix.go      — matrix rain renderer (grouped ANSI segments for SSH efficiency)
