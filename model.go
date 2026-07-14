@@ -30,9 +30,11 @@ const (
 	ViewProjects
 	ViewAbout
 	ViewContacts
+	ViewResume
+	ViewNow
 )
 
-var tabNames = []string{"Projects", "About", "Contacts"}
+var tabNames = []string{"Projects", "About", "Contacts", "Resume", "/now"}
 
 type tickMsg time.Time
 
@@ -136,8 +138,37 @@ type Model struct {
 	pingJitter   int // countdown until next ping update
 
 	// Contacts
-	contactsReveal int
-	sshFlash       int
+	contactsReveal  int
+	sshFlash        int
+	contactsCopyMode bool
+
+	// Quit confirm (double-press q within 2s)
+	quitPending     bool
+	quitPendingTick int
+
+	// Konami easter egg: ↑↑↓↓←→←→ba
+	konamiSeq  []string
+	konamiDone bool
+	konamiTick int
+
+	// Portrait shimmer (home screen)
+	portraitShimRow   int // -1 = none
+	portraitShimFrame int
+
+	// Command palette
+	cmdActive bool
+	cmdQuery  string
+	cmdSelIdx int
+
+	// Exit animation
+	exitPhase int
+	exitTick  int
+
+	// Cursor ghost trail (projects)
+	ghostCursor1 int
+	ghostFade1   int
+	ghostCursor2 int
+	ghostFade2   int
 }
 
 func NewModel(r *lipgloss.Renderer) Model {
@@ -173,25 +204,26 @@ func NewModel(r *lipgloss.Renderer) Model {
 	}
 
 	return Model{
-		renderer:     r,
-		width:        w,
-		height:       h,
-		currentView:  ViewMatrix,
-		matrixCols:   views.NewMatrixColumns(w, h),
-		matrixLocked: make(map[[2]int]rune),
-		matrixPending: pending,
-		matrixNameX:  nameX,
-		matrixNameY:  nameY,
-		bootLines:    lines,
-		bootSchedule: schedule,
-		bootVisible:  0,
-		cursorLeft:   6,
-		sessionID:    sid,
-		sessionStart: time.Now(),
-		stars:        stars,
-		scanlineY:    -1,
-		pingMs:       12 + rand.Intn(9),
-		pingJitter:   8,
+		renderer:          r,
+		width:             w,
+		height:            h,
+		currentView:       ViewMatrix,
+		matrixCols:        views.NewMatrixColumns(w, h),
+		matrixLocked:      make(map[[2]int]rune),
+		matrixPending:     pending,
+		matrixNameX:       nameX,
+		matrixNameY:       nameY,
+		bootLines:         lines,
+		bootSchedule:      schedule,
+		bootVisible:       0,
+		cursorLeft:        6,
+		sessionID:         sid,
+		sessionStart:      time.Now(),
+		stars:             stars,
+		scanlineY:         -1,
+		pingMs:            12 + rand.Intn(9),
+		pingJitter:        8,
+		portraitShimRow:   -1,
 	}
 }
 
@@ -208,12 +240,53 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
+		// Track key for Konami sequence
+		m.trackKonami(msg.String())
+
+		// Command palette intercepts most keys when active
+		if m.cmdActive {
+			switch msg.String() {
+			case "esc", "ctrl+c":
+				m.cmdActive = false
+				m.cmdQuery = ""
+				m.cmdSelIdx = 0
+			case "enter":
+				m.applyCmdSelection()
+			case "up", "k":
+				if m.cmdSelIdx > 0 { m.cmdSelIdx-- }
+			case "down", "j":
+				m.cmdSelIdx++
+			case "backspace":
+				if len(m.cmdQuery) > 0 {
+					runes := []rune(m.cmdQuery)
+					m.cmdQuery = string(runes[:len(runes)-1])
+					m.cmdSelIdx = 0
+				}
+			default:
+				if len(msg.String()) == 1 {
+					m.cmdQuery += msg.String()
+					m.cmdSelIdx = 0
+				}
+			}
+			return m, nil
+		}
+
 		// Reset idle counter on any keypress
 		m.idleTicks = 0
 		switch msg.String() {
 		case "ctrl+c":
-			m.quitting = true
-			return m, tea.Quit
+			m.exitPhase = 1
+			m.exitTick = m.tickCount
+			return m, nil
+
+		case "/":
+			// Open command palette from any content screen
+			if m.currentView >= ViewHome {
+				m.cmdActive = true
+				m.cmdQuery = ""
+				m.cmdSelIdx = 0
+			}
+			return m, nil
 
 		case "t":
 			// Cycle theme with flash
@@ -221,27 +294,48 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.themeFlash = 4
 			return m, nil
 
+		case "c":
+			// Toggle copy-friendly mode in contacts
+			if m.currentView == ViewContacts {
+				m.contactsCopyMode = !m.contactsCopyMode
+			}
+			return m, nil
+
 		case "q":
 			if m.currentView == ViewHome {
-				m.quitting = true
-				return m, tea.Quit
+				if m.quitPending && m.tickCount-m.quitPendingTick <= 80 {
+					// Confirmed — play exit animation
+					m.exitPhase = 1
+					m.exitTick = m.tickCount
+					m.quitPending = false
+					return m, nil
+				}
+				m.quitPending = true
+				m.quitPendingTick = m.tickCount
+				return m, nil
 			}
 			m.startWipe(ViewHome, m.activeTab)
 			return m, nil
 
 		case "esc":
 			if m.currentView != ViewHome && m.currentView != ViewBoot && m.currentView != ViewAlert {
+				m.contactsCopyMode = false
 				m.startWipe(ViewHome, m.activeTab)
 				return m, nil
 			}
 			if m.currentView == ViewHome {
-				m.quitting = true
-				return m, tea.Quit
+				if m.quitPending && m.tickCount-m.quitPendingTick <= 80 {
+					m.exitPhase = 1
+					m.exitTick = m.tickCount
+					m.quitPending = false
+					return m, nil
+				}
 			}
 			return m, nil
 
 		case "left", "h":
 			if m.currentView == ViewHome {
+				m.quitPending = false
 				m.activeTab--
 				if m.activeTab < 0 {
 					m.activeTab = len(tabNames) - 1
@@ -251,6 +345,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "right", "l":
 			if m.currentView == ViewHome {
+				m.quitPending = false
 				m.activeTab++
 				if m.activeTab >= len(tabNames) {
 					m.activeTab = 0
@@ -267,6 +362,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.projectCursor = 0
 				}
 				if m.projectCursor != prev {
+					m.shiftGhost(prev)
 					m.tagPopReveal = 0
 					m.velocity -= float64(steps) * 0.4
 					m.startDecrypt()
@@ -283,6 +379,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.projectCursor = len(views.AllProjects) - 1
 				}
 				if m.projectCursor != prev {
+					m.shiftGhost(prev)
 					m.tagPopReveal = 0
 					m.velocity += float64(steps) * 0.4
 					m.startDecrypt()
@@ -297,7 +394,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.numBuf = ""
 					prev := m.projectCursor
 					m.projectCursor = 0
-					if m.projectCursor != prev { m.tagPopReveal = 0; m.startDecrypt() }
+					if m.projectCursor != prev { m.shiftGhost(prev); m.tagPopReveal = 0; m.startDecrypt() }
 				} else {
 					m.numBuf = "g"
 				}
@@ -308,7 +405,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.currentView == ViewProjects {
 				prev := m.projectCursor
 				m.projectCursor = len(views.AllProjects) - 1
-				if m.projectCursor != prev { m.tagPopReveal = 0; m.startDecrypt() }
+				if m.projectCursor != prev { m.shiftGhost(prev); m.tagPopReveal = 0; m.startDecrypt() }
 				m.numBuf = ""
 			}
 			return m, nil
@@ -323,6 +420,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "enter":
 			if m.currentView == ViewHome {
+				m.quitPending = false
 				switch m.activeTab {
 				case 0:
 					m.startWipe(ViewProjects, 0)
@@ -330,6 +428,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.startWipe(ViewAbout, 1)
 				case 2:
 					m.startWipe(ViewContacts, 2)
+				case 3:
+					m.startWipe(ViewResume, 3)
+				case 4:
+					m.startWipe(ViewNow, 4)
 				}
 			}
 			return m, nil
@@ -440,7 +542,41 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.scanlineY = -1
 		}
 
-		// ── Idle ambient glitch ────────────────────────────────────
+		// -- Portrait shimmer (home only) -----------------------
+		if m.currentView == ViewHome {
+			if m.portraitShimFrame > 0 {
+				m.portraitShimFrame--
+				if m.portraitShimFrame == 0 {
+					m.portraitShimRow = -1
+				}
+			} else if m.tickCount%40 == 0 && rand.Intn(3) == 0 {
+				m.portraitShimRow   = rand.Intn(views.PortraitLines())
+				m.portraitShimFrame = 3
+			}
+		}
+
+		// ── Ghost cursor fade ─────────────────────────────────────
+		if m.ghostFade1 > 0 { m.ghostFade1-- }
+		if m.ghostFade2 > 0 { m.ghostFade2-- }
+
+		// ── Quit pending timeout (4s) ─────────────────────────────
+		if m.quitPending && m.tickCount-m.quitPendingTick > 80 {
+			m.quitPending = false
+		}
+
+		// ── Exit animation — play then quit ──────────────────────
+		if m.exitPhase == 1 {
+			if m.tickCount-m.exitTick >= 35 {
+				m.quitting = true
+				return m, tea.Quit
+			}
+			return m, tickCmd()
+		}
+
+		// ── Konami display timeout (10s) ──────────────────────────
+		if m.konamiDone && m.tickCount-m.konamiTick > 200 {
+			m.konamiDone = false
+		}
 		m.idleGlitch = false
 		if m.currentView == ViewHome {
 			m.idleTicks++
@@ -556,10 +692,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m Model) View() string {
 	if m.quitting {
-		r := m.renderer
-		cyanS := r.NewStyle().Foreground(lipgloss.Color("#00DFDF"))
-		dimS  := r.NewStyle().Foreground(lipgloss.Color("#555555"))
-		return "\n  " + cyanS.Render("✶ Thanks for visiting!") + "\n  " + dimS.Render("github.com/trafalgar-2006/portflio") + "\n  " + dimS.Render("ssh.mohith.is-a.dev") + "\n\n"
+		return m.renderExitAnimation()
+	}
+	// Exit animation in progress
+	if m.exitPhase == 1 {
+		return m.renderExitAnimation()
+	}
+	// Konami easter egg overlay
+	if m.konamiDone {
+		return m.renderKonamiEasterEgg()
+	}
+	// Command palette overlay
+	if m.cmdActive {
+		return m.renderCmdPalette()
 	}
 
 	var content string
@@ -579,14 +724,18 @@ func (m Model) View() string {
 		}
 		buildInfo := fmt.Sprintf("build %s · go1.22", BuildCommit)
 		connectedSecs := int(time.Since(m.sessionStart).Seconds())
-		content = views.RenderHome(m.renderer, m.width, m.height, m.revealIdx, starBright, m.taglineIdx, m.taglineDone, m.cursorBlink, m.glitchFrames, m.glitchRunes, m.lastCommit, m.sessionID, connectedSecs, buildInfo, m.scanlineY, m.idleGlitch, theme)
+		content = views.RenderHome(m.renderer, m.width, m.height, m.revealIdx, starBright, m.taglineIdx, m.taglineDone, m.cursorBlink, m.glitchFrames, m.glitchRunes, m.lastCommit, m.sessionID, connectedSecs, buildInfo, m.scanlineY, m.idleGlitch, m.portraitShimRow, theme)
 		content += m.renderTabBar(theme)
 	case ViewProjects:
-		content = views.RenderProjects(m.renderer, m.width, m.height, m.projectCursor, m.projectScroll, m.projectsReveal, m.tagPopReveal, m.livePulse, m.highlightY, m.decryptIdx, m.decryptRunes, theme)
+		content = views.RenderProjects(m.renderer, m.width, m.height, m.projectCursor, m.projectScroll, m.projectsReveal, m.tagPopReveal, m.livePulse, m.highlightY, m.decryptIdx, m.decryptRunes, m.tickCount, m.ghostCursor1, m.ghostFade1, m.ghostCursor2, m.ghostFade2, theme)
 	case ViewAbout:
 		content = views.RenderAbout(m.renderer, m.width, m.height, theme)
 	case ViewContacts:
-		content = views.RenderContacts(m.renderer, m.width, m.height, m.contactsReveal, m.sshFlash, theme)
+		content = views.RenderContacts(m.renderer, m.width, m.height, m.contactsReveal, m.sshFlash, m.contactsCopyMode, theme)
+	case ViewResume:
+		content = views.RenderResume(m.renderer, m.width, m.height)
+	case ViewNow:
+		content = views.RenderNow(m.renderer, m.width, m.height, theme)
 	default:
 		return ""
 	}
@@ -638,22 +787,28 @@ func (m *Model) startWipe(target View, tab int) {
 func (m Model) renderTabBar(theme views.Theme) string {
 	r := m.renderer
 	activeStyle   := r.NewStyle().Bold(true).Background(theme.TabActive).Foreground(lipgloss.Color("#0A0A0A")).Padding(0, 1)
-	inactiveStyle := r.NewStyle().Foreground(lipgloss.Color(theme.Dim))
 	hintStyle     := r.NewStyle().Foreground(lipgloss.Color(theme.VeryDim)).Italic(true)
 	sep           := "  "
 
 	var tabs []string
 	for i, name := range tabNames {
-		if i == m.activeTab {
+		dist := m.activeTab - i
+		if dist < 0 { dist = -dist }
+		switch {
+		case dist == 0:
 			tabs = append(tabs, activeStyle.Render(name))
-		} else {
-			tabs = append(tabs, inactiveStyle.Render(name))
+		case dist == 1:
+			tabs = append(tabs, r.NewStyle().Foreground(lipgloss.Color(theme.DimMid)).Render(name))
+		case dist == 2:
+			tabs = append(tabs, r.NewStyle().Foreground(lipgloss.Color(theme.Dim)).Render(name))
+		default:
+			tabs = append(tabs, r.NewStyle().Foreground(lipgloss.Color(theme.VeryDim)).Render(name))
 		}
 	}
 
 	themeName := r.NewStyle().Foreground(lipgloss.Color(theme.Primary)).Italic(true).Render("[t] "+theme.Name)
 	tabBar := "\n " + joinStrings(tabs, sep) + "   " + themeName + "\n"
-	tabBar += "\n " + hintStyle.Render("[← → tabs · enter open · ↑↓ browse · t theme · q quit]") + "\n"
+	tabBar += "\n " + hintStyle.Render("[← → tabs · enter open · ↑↓ browse · / search · t theme · q quit]") + "\n"
 	return tabBar
 }
 
@@ -675,17 +830,11 @@ func (m Model) renderFooterBar() string {
 	sidStyle := r.NewStyle().Foreground(lipgloss.Color(theme.Primary)).Background(lipgloss.Color(theme.FooterBg))
 	sepStyle := r.NewStyle().Foreground(lipgloss.Color(theme.Dim)).Background(lipgloss.Color(theme.FooterBg))
 	qStyle   := r.NewStyle().Foreground(lipgloss.Color(theme.VeryDim)).Background(lipgloss.Color(theme.FooterBg)).Italic(true)
+	confirmS := r.NewStyle().Foreground(lipgloss.Color(theme.Warning)).Background(lipgloss.Color(theme.FooterBg)).Bold(true)
 
 	secs := int(time.Since(m.sessionStart).Seconds())
 	mins := secs / 60
 	s    := secs % 60
-
-	viewName := "home"
-	switch m.currentView {
-	case ViewProjects: viewName = "projects"
-	case ViewAbout:    viewName = "about"
-	case ViewContacts: viewName = "contacts"
-	}
 
 	sid := m.sessionID
 	if sid == "" { sid = "--------" }
@@ -701,6 +850,15 @@ func (m Model) renderFooterBar() string {
 		visitorStr = fmt.Sprintf("  ·  ") + barBg.Render(fmt.Sprintf("👥 %d online", m.visitorCount))
 	}
 
+	// Quit pending hint
+	quitHint := qStyle.Render("[q] quit  ")
+	if m.quitPending {
+		quitHint = confirmS.Render("[q] confirm quit  ")
+	}
+
+	// Breadcrumb
+	crumb := m.breadcrumb()
+
 	bar := sidStyle.Render("  "+sid) +
 		sepStyle.Render("  ·  ") +
 		barBg.Render(fmt.Sprintf("connected: %02d:%02d", mins, s)) +
@@ -708,11 +866,11 @@ func (m Model) renderFooterBar() string {
 		pingS.Render(fmt.Sprintf("ping: %dms", m.pingMs)) +
 		visitorStr +
 		sepStyle.Render("  ·  ") +
-		barBg.Render(viewName) +
+		barBg.Render(crumb) +
 		sepStyle.Render("  ·  ") +
 		barBg.Render(theme.Name) +
 		sepStyle.Render("  ·  ") +
-		qStyle.Render("[q] quit  ")
+		quitHint
 
 	return "\n" + bar + "\n"
 }
@@ -833,3 +991,263 @@ func abs64(x float64) float64 {
 	}
 	return x
 }
+
+// shiftGhost records prev cursor position into the ghost trail.
+func (m *Model) shiftGhost(prev int) {
+	m.ghostCursor2 = m.ghostCursor1
+	m.ghostFade2   = m.ghostFade1
+	m.ghostCursor1 = prev
+	m.ghostFade1   = 8
+}
+
+// breadcrumb returns a home > section > detail path string for the footer.
+func (m Model) breadcrumb() string {
+	switch m.currentView {
+	case ViewProjects:
+		if m.projectCursor < len(views.AllProjects) {
+			t := views.AllProjects[m.projectCursor].Title
+			if len([]rune(t)) > 20 { t = string([]rune(t)[:19]) + "..." }
+			return "home > projects > " + t
+		}
+		return "home > projects"
+	case ViewAbout:
+		return "home > about"
+	case ViewContacts:
+		return "home > contacts"
+	case ViewResume:
+		return "home > resume"
+	case ViewNow:
+		return "home > /now"
+	default:
+		return "home"
+	}
+}
+
+// konamiCode is the classic cheat code sequence.
+var konamiCode = []string{"up", "up", "down", "down", "left", "right", "left", "right", "b", "a"}
+
+// trackKonami appends the key to the rolling sequence and triggers easter egg if matched.
+func (m *Model) trackKonami(key string) {
+	m.konamiSeq = append(m.konamiSeq, key)
+	if len(m.konamiSeq) > len(konamiCode) {
+		m.konamiSeq = m.konamiSeq[len(m.konamiSeq)-len(konamiCode):]
+	}
+	if len(m.konamiSeq) == len(konamiCode) {
+		match := true
+		for i, k := range konamiCode {
+			if m.konamiSeq[i] != k {
+				match = false
+				break
+			}
+		}
+		if match {
+			m.konamiDone = true
+			m.konamiTick = m.tickCount
+		}
+	}
+}
+
+// cmdEntry is a searchable item in the command palette.
+type cmdEntry struct{ label, target string }
+
+// allCmdEntries returns every item the command palette can navigate to.
+func allCmdEntries() []cmdEntry {
+	entries := []cmdEntry{
+		{"Projects", "projects"},
+		{"About", "about"},
+		{"Contacts", "contacts"},
+		{"Resume", "resume"},
+		{"/now", "now"},
+	}
+	for i, p := range views.AllProjects {
+		entries = append(entries, cmdEntry{p.Title, fmt.Sprintf("project:%d", i)})
+	}
+	return entries
+}
+
+// applyCmdSelection navigates to the highlighted palette entry.
+func (m *Model) applyCmdSelection() {
+	entries := allCmdEntries()
+	var matched []cmdEntry
+	q := strings.ToLower(m.cmdQuery)
+	for _, e := range entries {
+		if q == "" || strings.Contains(strings.ToLower(e.label), q) {
+			matched = append(matched, e)
+		}
+	}
+	if len(matched) == 0 {
+		m.cmdActive = false
+		return
+	}
+	if m.cmdSelIdx >= len(matched) {
+		m.cmdSelIdx = len(matched) - 1
+	}
+	target := matched[m.cmdSelIdx].target
+	m.cmdActive = false
+	m.cmdQuery  = ""
+	m.cmdSelIdx = 0
+	switch target {
+	case "projects":
+		m.startWipe(ViewProjects, 0)
+	case "about":
+		m.startWipe(ViewAbout, 1)
+	case "contacts":
+		m.startWipe(ViewContacts, 2)
+	case "resume":
+		m.startWipe(ViewResume, 3)
+	case "now":
+		m.startWipe(ViewNow, 4)
+	default:
+		if strings.HasPrefix(target, "project:") {
+			var idx int
+			fmt.Sscanf(target, "project:%d", &idx)
+			m.startWipe(ViewProjects, 0)
+			m.projectCursor = idx
+		}
+	}
+}
+
+// renderExitAnimation shows a multi-frame animated goodbye screen.
+func (m Model) renderExitAnimation() string {
+	r := m.renderer
+	frames := []string{
+		"  ...",
+		"  bye.",
+		"  bye..",
+		"  bye...",
+		"  * Thanks for visiting!",
+		"  * Thanks for visiting! *",
+		"  * Thanks for visiting! * -- ssh.mohith.is-a.dev",
+	}
+	elapsed := 0
+	if m.exitTick > 0 {
+		elapsed = m.tickCount - m.exitTick
+	}
+	frameIdx := elapsed / 5
+	if frameIdx >= len(frames) {
+		frameIdx = len(frames) - 1
+	}
+	cyanS := r.NewStyle().Foreground(lipgloss.Color("#00DFDF")).Bold(true)
+	dimS  := r.NewStyle().Foreground(lipgloss.Color("#555555"))
+	var b strings.Builder
+	b.WriteString("\n\n")
+	b.WriteString(cyanS.Render(frames[frameIdx]) + "\n\n")
+	b.WriteString(dimS.Render("  github.com/trafalgar-2006/portflio") + "\n")
+	b.WriteString(dimS.Render("  ssh.mohith.is-a.dev") + "\n\n")
+	return b.String()
+}
+
+// renderCmdPalette renders a fuzzy-jump command palette modal.
+func (m Model) renderCmdPalette() string {
+	r     := m.renderer
+	theme := views.Themes[m.themeIdx]
+	entries := allCmdEntries()
+	var matched []cmdEntry
+	q := strings.ToLower(m.cmdQuery)
+	for _, e := range entries {
+		if q == "" || strings.Contains(strings.ToLower(e.label), q) {
+			matched = append(matched, e)
+		}
+	}
+
+	boxW := 52
+	if m.width < boxW+4 {
+		boxW = m.width - 4
+	}
+	padLeft := (m.width - boxW) / 2
+	if padLeft < 0 {
+		padLeft = 0
+	}
+	lp := strings.Repeat(" ", padLeft)
+
+	cyanS  := r.NewStyle().Foreground(lipgloss.Color(theme.Primary))
+	dimS   := r.NewStyle().Foreground(lipgloss.Color(theme.Dim))
+	selS   := r.NewStyle().Background(lipgloss.Color(theme.BoxBorder)).Foreground(lipgloss.Color(theme.Primary)).Bold(true)
+	boxS   := r.NewStyle().Foreground(lipgloss.Color(theme.BoxBorder))
+	inputS := r.NewStyle().Foreground(lipgloss.Color(theme.Text))
+
+	cur := "|"
+	if m.tickCount%10 < 5 {
+		cur = " "
+	}
+
+	var b strings.Builder
+	vpad := m.height / 4
+	if vpad < 2 {
+		vpad = 2
+	}
+	b.WriteString(strings.Repeat("\n", vpad))
+	b.WriteString(lp + boxS.Render("╭"+strings.Repeat("─", boxW-2)+"╮") + "\n")
+
+	queryLine := " " + cyanS.Render("> ") + inputS.Render(m.cmdQuery) + dimS.Render(cur)
+	qvis      := lipgloss.Width(queryLine)
+	qpad      := boxW - 2 - qvis
+	if qpad < 0 {
+		qpad = 0
+	}
+	b.WriteString(lp + boxS.Render("|") + queryLine + strings.Repeat(" ", qpad) + boxS.Render("|") + "\n")
+	b.WriteString(lp + boxS.Render("+"+strings.Repeat("-", boxW-2)+"+") + "\n")
+
+	maxShow := 8
+	for i, e := range matched {
+		if i >= maxShow {
+			break
+		}
+		label := e.label
+		if len([]rune(label)) > boxW-4 {
+			label = string([]rune(label)[:boxW-5]) + "~"
+		}
+		inner := " " + label
+		ivis  := len([]rune(inner))
+		ipad  := boxW - 2 - ivis
+		if ipad < 0 {
+			ipad = 0
+		}
+		row := inner + strings.Repeat(" ", ipad)
+		if i == m.cmdSelIdx {
+			b.WriteString(lp + boxS.Render("|") + selS.Render(row) + boxS.Render("|") + "\n")
+		} else {
+			b.WriteString(lp + boxS.Render("|") + dimS.Render(row) + boxS.Render("|") + "\n")
+		}
+	}
+	if len(matched) == 0 {
+		noRes := " no results"
+		npad  := boxW - 2 - len(noRes)
+		if npad < 0 {
+			npad = 0
+		}
+		b.WriteString(lp + boxS.Render("|") + dimS.Render(noRes+strings.Repeat(" ", npad)) + boxS.Render("|") + "\n")
+	}
+	b.WriteString(lp + boxS.Render("╰"+strings.Repeat("─", boxW-2)+"╯") + "\n")
+	b.WriteString(lp + dimS.Render("  up/down  enter jump  esc cancel") + "\n")
+	return b.String()
+}
+
+// renderKonamiEasterEgg shows the konami code secret screen.
+func (m Model) renderKonamiEasterEgg() string {
+	r     := m.renderer
+	theme := views.Themes[m.themeIdx]
+	cyanS    := r.NewStyle().Foreground(lipgloss.Color(theme.Primary)).Bold(true)
+	goldS    := r.NewStyle().Foreground(lipgloss.Color(theme.Accent)).Bold(true)
+	dimS     := r.NewStyle().Foreground(lipgloss.Color(theme.Dim))
+	magentaS := r.NewStyle().Foreground(lipgloss.Color(theme.Secondary))
+
+	elapsed := m.tickCount - m.konamiTick
+	blink   := elapsed%10 < 5
+
+	var b strings.Builder
+	b.WriteString("\n\n\n")
+	b.WriteString("  " + goldS.Render(">>> KONAMI CODE ACTIVATED <<<") + "\n\n")
+	b.WriteString("  " + cyanS.Render("UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT B A") + "\n\n")
+	b.WriteString("  " + dimS.Render("You found the secret!") + "\n\n")
+	b.WriteString("  " + magentaS.Render("\"Any sufficiently advanced technology") + "\n")
+	b.WriteString("  " + magentaS.Render(" is indistinguishable from magic.\"") + "\n")
+	b.WriteString("  " + dimS.Render("                   -- Arthur C. Clarke") + "\n\n")
+	if blink {
+		b.WriteString("  " + cyanS.Render("[ press any key to continue ]") + "\n")
+	} else {
+		b.WriteString("  " + dimS.Render("  press any key to continue  ") + "\n")
+	}
+	return b.String()
+}
+

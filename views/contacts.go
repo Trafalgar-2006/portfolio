@@ -44,7 +44,7 @@ func padToWidth(content string, targetWidth int) string {
 	return content + strings.Repeat(" ", targetWidth-vis)
 }
 
-func RenderContacts(r *lipgloss.Renderer, width, height, contactsReveal, sshFlash int, theme Theme) string {
+func RenderContacts(r *lipgloss.Renderer, width, height, contactsReveal, sshFlash int, copyMode bool, theme Theme) string {
 	cyanStyle  := r.NewStyle().Foreground(lipgloss.Color(theme.Primary))
 	dimStyle   := r.NewStyle().Foreground(lipgloss.Color(theme.Dim))
 	dimMid     := r.NewStyle().Foreground(lipgloss.Color(theme.DimMid))
@@ -102,13 +102,22 @@ func RenderContacts(r *lipgloss.Renderer, width, height, contactsReveal, sshFlas
 
 	b.WriteString(divider + "\n\n")
 
-	sshLine := whiteStyle.Render("You're viewing this over ") + cyanStyle.Bold(true).Render("SSH") + whiteStyle.Render("!")
-	if sshFlash > 0 && sshFlash%2 == 0 {
-		sshLine = r.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Bold(true).Render("You're viewing this over SSH! ✦")
+	// Copy-mode: plain-text dump for easy selection
+	if copyMode {
+		b.WriteString("  " + r.NewStyle().Foreground(lipgloss.Color(theme.Accent)).Bold(true).Render("── plain text (select to copy) ──") + "\n\n")
+		for _, c := range AllContacts {
+			b.WriteString("  " + c.Label + ": " + c.Value + "\n")
+		}
+		b.WriteString("\n  " + dimStyle.Render("[c] toggle · [esc] go back") + "\n")
+	} else {
+		sshLine := whiteStyle.Render("You're viewing this over ") + cyanStyle.Bold(true).Render("SSH") + whiteStyle.Render("!")
+		if sshFlash > 0 && sshFlash%2 == 0 {
+			sshLine = r.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Bold(true).Render("You're viewing this over SSH! ✦")
+		}
+		b.WriteString("  " + sshLine + "\n")
+		b.WriteString("  " + dimStyle.Render("Built with Go + Bubbletea + Wish  ·  github.com/trafalgar-2006/ssh-portfolio") + "\n\n")
+		b.WriteString("  " + dimStyle.Render("[c] copy-friendly view · [esc] go back") + "\n")
 	}
-	b.WriteString("  " + sshLine + "\n")
-	b.WriteString("  " + dimStyle.Render("Built with Go + Bubbletea + Wish  ·  github.com/trafalgar-2006/ssh-portfolio") + "\n\n")
-	b.WriteString("  " + dimStyle.Render("[esc to go back]") + "\n")
 
 	return b.String()
 }

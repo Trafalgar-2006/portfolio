@@ -142,7 +142,33 @@ func statusBadge(r *lipgloss.Renderer, status string, theme Theme) string {
 	}
 }
 
-func RenderProjects(r *lipgloss.Renderer, width, height, cursor, scroll, projectsReveal, tagPopReveal int, livePulse bool, highlightY float64, decryptIdx int, decryptRunes []rune, theme Theme) string {
+// sparklineStr returns a 6-char animated sparkline for a project row.
+func sparklineStr(proj Project, tickCount int) string {
+	const bars = "▁▂▃▄▅▆▇"
+	runes := []rune(bars)
+	var pattern []int
+	switch proj.Status {
+	case "Live":
+		pattern = []int{2, 4, 6, 5, 3, 4, 6, 5} // animated wave
+	case "WIP":
+		pattern = []int{1, 2, 1, 3, 2, 1, 2, 3}
+	case "Research":
+		pattern = []int{1, 2, 3, 2, 1, 2, 1, 2}
+	default:
+		pattern = []int{0, 0, 1, 0, 0, 1, 0, 0}
+	}
+	offset := 0
+	if proj.Status == "Live" {
+		offset = (tickCount / 3) % len(pattern)
+	}
+	var sb strings.Builder
+	for i := 0; i < 5; i++ {
+		sb.WriteRune(runes[pattern[(offset+i)%len(pattern)]])
+	}
+	return sb.String()
+}
+
+func RenderProjects(r *lipgloss.Renderer, width, height, cursor, scroll, projectsReveal, tagPopReveal int, livePulse bool, highlightY float64, decryptIdx int, decryptRunes []rune, tickCount, ghostCursor1, ghostFade1, ghostCursor2, ghostFade2 int, theme Theme) string {
 	goldStyle       := r.NewStyle().Foreground(theme.Accent).Bold(true)
 	cyanStyle       := r.NewStyle().Foreground(theme.Primary)
 	dimStyle        := r.NewStyle().Foreground(theme.Dim)
@@ -188,20 +214,34 @@ func RenderProjects(r *lipgloss.Renderer, width, height, cursor, scroll, project
 
 		isSelected := i == cursor
 		isHover    := i == visualCursor && visualCursor != cursor
+		isGhost1   := i == ghostCursor1 && ghostFade1 > 0 && !isSelected
+		isGhost2   := i == ghostCursor2 && ghostFade2 > 0 && !isSelected && !isGhost1
 		num        := fmt.Sprintf("%d", i+1)
 
 		title := proj.Title
-		maxTitleW := leftW - 5
+		maxTitleW := leftW - 9 // leave room for sparkline + dot
 		if len([]rune(title)) > maxTitleW {
 			runes := []rune(title)
 			title = string(runes[:maxTitleW-1]) + "…"
 		}
+
+		sparkColor := lipgloss.Color(theme.Success)
+		if proj.Status == "WIP"      { sparkColor = theme.Warning }
+		if proj.Status == "Research" { sparkColor = theme.Purple }
+		sparkS := r.NewStyle().Foreground(sparkColor)
+		spark  := sparkS.Render(sparklineStr(proj, tickCount))
 
 		var line string
 		if isSelected {
 			padding := leftW - len(num) - len([]rune(title)) - 3
 			if padding < 0 { padding = 0 }
 			line = selectedBg.Render(" "+num+" "+title+strings.Repeat(" ", padding))
+		} else if isGhost1 {
+			alpha := float64(ghostFade1) / 8.0
+			_ = alpha
+			line = r.NewStyle().Foreground(lipgloss.Color(theme.DimMid)).Render(" "+num+" "+title)
+		} else if isGhost2 {
+			line = r.NewStyle().Foreground(lipgloss.Color(theme.Dim)).Render(" "+num+" "+title)
 		} else if isHover {
 			line = r.NewStyle().Foreground(theme.Primary).Render(" "+num+" ") + dimMidStyle.Render(title)
 		} else {
@@ -220,7 +260,7 @@ func RenderProjects(r *lipgloss.Renderer, width, height, cursor, scroll, project
 		default:
 			dot = " "
 		}
-		left.WriteString(line + dot + "\n")
+		left.WriteString(line + " " + spark + dot + "\n")
 	}
 
 	left.WriteString(boxStyle.Render(" "+strings.Repeat("─", leftW-2)) + "\n")

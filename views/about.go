@@ -17,7 +17,25 @@ func RenderAbout(r *lipgloss.Renderer, width, height int, theme Theme) string {
 	goldStyle    := r.NewStyle().Foreground(lipgloss.Color(theme.Accent))
 	greenStyle   := r.NewStyle().Foreground(lipgloss.Color(theme.Success))
 	purpleStyle  := r.NewStyle().Foreground(lipgloss.Color(theme.Purple))
+	boxStyle     := r.NewStyle().Foreground(lipgloss.Color(theme.BoxBorder))
 	divider      := dimDarkStyle.Render("  " + strings.Repeat("─", 50))
+
+	boxW := 56
+	if width < boxW+6 { boxW = width - 6 }
+	secTop := func(label string) string {
+		inner := " " + label + " "
+		pad   := boxW - len(inner) - 2
+		if pad < 0 { pad = 0 }
+		return "  " + boxStyle.Render("╭"+inner+strings.Repeat("─", pad)+"╮")
+	}
+	secBot := "  " + boxStyle.Render("╰"+strings.Repeat("─", boxW-2)+"╯")
+	secRow := func(s string) string {
+		vis := lipgloss.Width(s)
+		pad := ""
+		if boxW-2-vis > 0 { pad = strings.Repeat(" ", boxW-2-vis) }
+		return "  " + boxStyle.Render("│") + s + pad + boxStyle.Render("│")
+	}
+	secBlank := func() string { return secRow("") }
 
 	var b strings.Builder
 	b.WriteString("\n")
@@ -49,49 +67,53 @@ func RenderAbout(r *lipgloss.Renderer, width, height int, theme Theme) string {
 	b.WriteString("  " + dimStyle.Render("Bengaluru, Karnataka, India") + "\n\n")
 
 	// Education
-	b.WriteString("  " + cyanStyle.Bold(true).Render("◆ Education") + "\n")
-	b.WriteString("  " + whiteStyle.Bold(true).Render("Manipal Institute of Technology, Bengaluru") + "\n")
-	b.WriteString("  " + whiteStyle.Render("B.Tech — Electronics & Computer Engineering") + "\n")
-	b.WriteString("  " + dimStyle.Render("Aug 2023 – Jul 2027  ·  GPA: In Progress") + "\n")
-	b.WriteString("  " + greenStyle.Render("▸ ") + whiteStyle.Render("President, ") + purpleStyle.Render("MBOSC") + dimStyle.Render(" (Manipal Bengaluru Open Source Community)") + "\n")
-	b.WriteString("  " + greenStyle.Render("▸ ") + dimStyle.Render("Coursework: Data Structures, Algorithms, Network Protocols, Embedded Systems, Probability & Statistics") + "\n\n")
+	b.WriteString(secTop(cyanStyle.Bold(true).Render("◆ Education")) + "\n")
+	b.WriteString(secBlank() + "\n")
+	b.WriteString(secRow("  "+whiteStyle.Bold(true).Render("Manipal Institute of Technology, Bengaluru")) + "\n")
+	b.WriteString(secRow("  "+whiteStyle.Render("B.Tech — Electronics & Computer Engineering")) + "\n")
+	b.WriteString(secRow("  "+dimStyle.Render("Aug 2023 – Jul 2027  ·  GPA: In Progress")) + "\n")
+	b.WriteString(secRow("  "+greenStyle.Render("▸ ")+whiteStyle.Render("President, ")+purpleStyle.Render("MBOSC")+dimStyle.Render(" (Manipal Bengaluru Open Source Community)")) + "\n")
+	b.WriteString(secRow("  "+greenStyle.Render("▸ ")+dimStyle.Render("Coursework: DSA, Algorithms, Network Protocols, Embedded Systems")) + "\n")
+	b.WriteString(secBlank() + "\n")
+	b.WriteString(secBot + "\n\n")
 
 	// Experience
-	b.WriteString("  " + cyanStyle.Bold(true).Render("◆ Experience") + "\n\n")
+	b.WriteString(secTop(cyanStyle.Bold(true).Render("◆ Experience")) + "\n")
+	b.WriteString(secBlank() + "\n")
 
 	// ISRO
-	b.WriteString("  " + goldStyle.Bold(true).Render("Computer Vision Intern") + "\n")
-	b.WriteString("  " + magentaStyle.Render("ISRO – LEOS") + "  " + dimStyle.Render("Dec 2025 – Jan 2026  ·  Bengaluru") + "\n")
-	b.WriteString("  " + greenStyle.Render("▸ ") + dimStyle.Render("Architected BlenderProc synthetic data pipeline → 6,000+ annotated images (COCO/YOLO)") + "\n")
-	b.WriteString("  " + greenStyle.Render("▸ ") + dimStyle.Render("Implemented SOG2 rotations + spherical camera trajectories for 360° angular coverage") + "\n")
-	b.WriteString("  " + greenStyle.Render("▸ ") + dimStyle.Render("Reduced data generation time 70% by benchmarking path-scaling parameters") + "\n")
-	b.WriteString("  " + greenStyle.Render("▸ ") + dimStyle.Render("Deployed YOLOv7 on NVIDIA Jetson Xavier via TensorRT — 22 FPS real-time inference") + "\n")
-	b.WriteString("  " + greenStyle.Render("▸ ") + dimStyle.Render("Built GAN-based domain adaptation to close sim-to-real gap for offline missions") + "\n\n")
+	b.WriteString(secRow("  "+goldStyle.Bold(true).Render("Computer Vision Intern")) + "\n")
+	b.WriteString(secRow("  "+magentaStyle.Render("ISRO – LEOS")+"  "+dimStyle.Render("Dec 2025 – Jan 2026  ·  Bengaluru")) + "\n")
+	b.WriteString(secRow("  "+greenStyle.Render("▸ ")+dimStyle.Render("BlenderProc pipeline → 6,000+ COCO/YOLO annotated images")) + "\n")
+	b.WriteString(secRow("  "+greenStyle.Render("▸ ")+dimStyle.Render("YOLOv7 on Jetson Xavier via TensorRT — 22 FPS real-time")) + "\n")
+	b.WriteString(secRow("  "+greenStyle.Render("▸ ")+dimStyle.Render("GAN domain adaptation to close sim-to-real gap")) + "\n")
+	b.WriteString(secBlank() + "\n")
 
 	// SenseOps
-	b.WriteString("  " + goldStyle.Bold(true).Render("Software Engineering Intern") + "\n")
-	b.WriteString("  " + magentaStyle.Render("SenseOps Tech Solutions Pvt. Ltd.") + "  " + dimStyle.Render("May 2025 – Jul 2025  ·  Bengaluru") + "\n")
-	b.WriteString("  " + greenStyle.Render("▸ ") + dimStyle.Render("Rebuilt company portfolio site with mobile-first responsive design, measurable Lighthouse gains") + "\n")
-	b.WriteString("  " + greenStyle.Render("▸ ") + dimStyle.Render("Designed & implemented custom UDP/TCP packet analyser for distributed vibration sensor network") + "\n")
-	b.WriteString("  " + greenStyle.Render("▸ ") + dimStyle.Render("Improved real-time data transmission reliability and reduced packet loss across 10+ hardware nodes") + "\n\n")
+	b.WriteString(secRow("  "+goldStyle.Bold(true).Render("Software Engineering Intern")) + "\n")
+	b.WriteString(secRow("  "+magentaStyle.Render("SenseOps Tech Solutions")+"  "+dimStyle.Render("May – Jul 2025  ·  Bengaluru")) + "\n")
+	b.WriteString(secRow("  "+greenStyle.Render("▸ ")+dimStyle.Render("Rebuilt portfolio: mobile-first, Lighthouse gains")) + "\n")
+	b.WriteString(secRow("  "+greenStyle.Render("▸ ")+dimStyle.Render("Custom UDP/TCP packet analyser for vibration sensor network")) + "\n")
+	b.WriteString(secBlank() + "\n")
 
 	// Webcraft
-	b.WriteString("  " + goldStyle.Bold(true).Render("Founder & Lead Engineer") + "\n")
-	b.WriteString("  " + magentaStyle.Render("Webcraft Studios") + "  " + dimStyle.Render("Jan 2025 – Present  ·  Bengaluru") + "\n")
-	b.WriteString("  " + greenStyle.Render("▸ ") + dimStyle.Render("Founded digital agency, scaled to multiple international SaaS clients within first year") + "\n")
-	b.WriteString("  " + greenStyle.Render("▸ ") + dimStyle.Render("Engineered full-stack platforms: React, Node.js, MongoDB, Stripe — subscription billing + dashboards") + "\n")
-	b.WriteString("  " + greenStyle.Render("▸ ") + dimStyle.Render("Built delivery pipeline (Discovery→Design→Dev→Launch) cutting cycle time by 30%+") + "\n\n")
+	b.WriteString(secRow("  "+goldStyle.Bold(true).Render("Founder & Lead Engineer")) + "\n")
+	b.WriteString(secRow("  "+magentaStyle.Render("Webcraft Studios")+"  "+dimStyle.Render("Jan 2025 – Present  ·  Bengaluru")) + "\n")
+	b.WriteString(secRow("  "+greenStyle.Render("▸ ")+dimStyle.Render("Digital agency, multiple intl. SaaS clients in year one")) + "\n")
+	b.WriteString(secRow("  "+greenStyle.Render("▸ ")+dimStyle.Render("React / Node.js / MongoDB / Stripe — subscription billing")) + "\n")
+	b.WriteString(secBlank() + "\n")
+	b.WriteString(secBot + "\n\n")
 
 	// Skills
-	b.WriteString("  " + cyanStyle.Bold(true).Render("◆ Skills") + "\n\n")
+	b.WriteString(secTop(cyanStyle.Bold(true).Render("◆ Skills")) + "\n")
+	b.WriteString(secBlank() + "\n")
 
 	type skillBar struct {
 		name    string
 		pct     int
-		colorFn func(string) string // returns colored bar segment
+		colorFn func(string) string
 	}
 
-	// Color functions using theme
 	langColor  := func(s string) string { return r.NewStyle().Foreground(lipgloss.Color(theme.Primary)).Render(s) }
 	mlColor    := func(s string) string { return r.NewStyle().Foreground(lipgloss.Color(theme.Secondary)).Render(s) }
 	frameColor := func(s string) string { return r.NewStyle().Foreground(lipgloss.Color(theme.Purple)).Render(s) }
@@ -119,9 +141,11 @@ func RenderAbout(r *lipgloss.Renderer, width, height int, theme Theme) string {
 		bar := s.colorFn(strings.Repeat("█", filled)) + dimDarkStyle.Render(strings.Repeat("░", empty))
 		pctStr  := fmt.Sprintf("%3d%%", s.pct)
 		namePad := fmt.Sprintf("%-12s", s.name)
-		b.WriteString("  " + dimStyle.Render(namePad) + "  " + bar + "  " + dimDarkStyle.Render(pctStr) + "\n")
+		rowContent := " " + dimStyle.Render(namePad) + "  " + bar + "  " + dimDarkStyle.Render(pctStr)
+		b.WriteString(secRow(rowContent) + "\n")
 	}
-	b.WriteString("\n")
+	b.WriteString(secBlank() + "\n")
+	b.WriteString(secBot + "\n\n")
 
 	// What drives me
 	b.WriteString("  " + cyanStyle.Bold(true).Render("◆ What drives me") + "\n")

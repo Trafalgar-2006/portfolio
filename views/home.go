@@ -60,8 +60,9 @@ const TaglineText = "is an engineer, builder & creator who turns ideas into prod
 
 func BannerLines() int         { return len(nameBanner) }
 func NameBannerLines() []string { return nameBanner }
+func PortraitLines() int        { return len(portraitArt) }
 
-func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, starBright []bool, taglineIdx int, taglineDone bool, cursorBlink bool, glitchFrames int, glitchRunes [][]rune, lastCommit string, sessionID string, connectedSecs int, buildInfo string, scanlineY int, idleGlitch bool, theme Theme) string {
+func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, starBright []bool, taglineIdx int, taglineDone bool, cursorBlink bool, glitchFrames int, glitchRunes [][]rune, lastCommit string, sessionID string, connectedSecs int, buildInfo string, scanlineY int, idleGlitch bool, shimRow int, theme Theme) string {
 	cyanStyle       := r.NewStyle().Foreground(lipgloss.Color(theme.Primary))
 	dimStyle        := r.NewStyle().Foreground(lipgloss.Color(theme.Dim))
 	whiteStyle      := r.NewStyle().Foreground(lipgloss.Color(theme.Text))
@@ -79,6 +80,7 @@ func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, starBright [
 		portReveal = len(portraitArt)
 	}
 
+	shimStyle := r.NewStyle().Foreground(lipgloss.Color(theme.Secondary)) // shimmer colour
 	if showPortrait {
 		for i, line := range portraitArt {
 			if i < portReveal {
@@ -87,7 +89,12 @@ func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, starBright [
 				if len(runes) > portraitWidth {
 					runes = runes[:portraitWidth]
 				}
-				leftCol.WriteString(cyanStyle.Render(string(runes)))
+				// Portrait shimmer: flash one row in secondary colour
+				if i == shimRow {
+					leftCol.WriteString(shimStyle.Render(string(runes)))
+				} else {
+					leftCol.WriteString(cyanStyle.Render(string(runes)))
+				}
 			} else {
 				leftCol.WriteString(strings.Repeat(" ", portraitWidth))
 			}
