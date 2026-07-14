@@ -7,33 +7,37 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// ASCII braille portrait — trimmed to 24 visible chars so it fits on 80-col terminals
+// Full-width braille portrait (50 chars per line).
+// Show only when terminal is wide enough (>= 115 cols).
 var portraitArt = []string{
-	" ⠄⠠⡀⠄⠠⠀⠄⠠⠀⠄⢠⠀⠄⡠⠀⡄⠠⠀⠀⠠⠀⠄",
-	" ⢈⠐⠠⢈⠡⠈⠄⠡⡈⢐⠠⢈⠐⠠⠁⠀⠀⠀⠠⠁⡈⠄",
-	" ⠠⠌⡐⠂⠄⠡⢈⠐⡀⠢⠐⠂⢉⠐⡀⠀⠀⠀⠀⠀⠀⠀",
-	" ⡐⠠⠄⠡⢈⡐⢈⡐⠠⢁⡘⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
-	" ⠠⠁⠌⡐⠠⠐⠠⢀⠃⠂⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
-	" ⠡⠘⠠⠄⡑⢈⡁⠂⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
-	" ⠂⡡⢁⢂⠰⢀⠰⢁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
-	" ⠡⠐⣀⠢⠐⢂⠰⠈⠀⠀⠀⠀⠀⠀⠀⠀⠀⡀⠀⠀⠀⠀",
-	" ⡈⠔⡀⢂⠁⡂⠄⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⡀⠤⡈⠔⠠",
-	" ⡁⠆⡈⠔⢂⠡⠌⠀⠀⠀⠀⠀⠀⠀⠀⣀⠂⡌⢀⠈⠀⡁",
-	" ⠐⡠⠁⢌⠠⠒⡈⠄⠀⠀⠀⠀⠀⠀⡐⠄⢮⣐⠣⣄⠡⠀",
-	" ⠊⠄⡑⠠⢂⠁⠆⢀⠠⠒⠤⢀⠀⡰⢈⡜⢮⣇⡛⢤⢋⡔",
-	" ⡡⠘⠠⢁⠂⣉⠰⠀⠆⢠⡐⠡⢂⠡⠒⢌⠲⠩⠜⡀⠂⠈",
-	" ⠡⠌⡁⠂⢌⠀⠆⢡⠚⡌⢡⠃⢌⠂⡉⠄⠃⠁⠀⠀⢤⡱",
-	" ⡐⡈⠤⠑⡀⠊⠌⡄⠁⠈⠤⣉⠰⡈⢐⠈⠄⠀⠠⠙⢢⠣",
-	" ⠒⡀⠆⠡⠐⣉⠰⠠⠀⠀⠒⡠⠑⡄⠃⠌⠀⠀⠀⠤⣀⡤",
-	" ⠆⠡⠌⢂⠡⠄⢂⠡⠃⠀⢁⠢⢑⠠⢉⠂⠠⡄⠀⠀⠀⠀",
-	" ⡐⠡⡈⢂⠔⠨⠄⢂⠀⠀⡀⠆⣁⠢⠁⡌⢰⢩⠖⡔⢶⡠",
-	" ⡠⠡⠐⠡⣈⠂⢅⠂⠀⠀⡐⠄⡀⠂⢅⢢⡁⢎⡘⠌⠠⠙",
-	" ⢁⢂⠉⠔⠠⡈⠄⢊⢀⠰⡐⠠⢀⠉⠄⢂⠹⣄⠲⣈⢄⡐",
-	" ⠂⡄⠊⠌⡐⠠⠑⣈⠐⢢⠡⠘⠠⢈⠐⠠⠁⠌⡱⠌⠦⡑",
-	" ⡡⠄⠉⠒⠈⠁⠈⠀⠈⢆⠡⢃⠁⠂⠌⡐⠀⢀⠀⠌⠐⠁",
-	" ⠀⠀⠀⠀⠀⠀⠀⠀⢌⠢⡑⠌⡌⠌⡐⠀⠄⠂⠀⠀⡀⠀",
-	" ⠀⠀⠀⠀⠀⠀⢰⢁⠢⢡⠘⡐⢌⠢⡁⠌⠀⠀⠀⠄⠀⠀",
+	" ⠄⠠⡀⠄⠠⠀⠄⠠⠀⠄⢠⠀⠄⡠⠀⡄⠠⠀⠀⠠⠀⠄⠠⠀⠄⠀⠀⠀⠀⠀⠠⢀⠀⠄⠠⠀⠄⠠⠀⠄⠠⠀⠄⠠⠀⠄⠠⠀⠄⡀",
+	" ⢈⠐⠠⢈⠡⠈⠄⠡⡈⢐⠠⢈⠐⠠⠁⠀⠀⠀⠠⠁⡈⠄⠀⠀⠠⠁⡈⠄⠀⠀⠠⠁⡈⠄⠀⠀⠠⠁⡈⠄⠀⠠⠁⡈⠄⠀⠠⠁⡈⠄",
+	" ⠠⠌⡐⠂⠄⠡⢈⠐⡀⠢⠐⠂⢉⠐⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+	" ⡐⠠⠄⠡⢈⡐⢈⡐⠠⢁⡘⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+	" ⠠⠁⠌⡐⠠⠐⠠⢀⠃⠂⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+	" ⠡⠘⠠⠄⡑⢈⡁⠂⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+	" ⠂⡡⢁⢂⠰⢀⠰⢁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+	" ⠡⠐⣀⠢⠐⢂⠰⠈⠀⠀⠀⠀⠀⠀⠀⠀⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+	" ⡈⠔⡀⢂⠁⡂⠄⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⡀⠤⡈⠔⠠⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+	" ⡁⠆⡈⠔⢂⠡⠌⠀⠀⠀⠀⠀⠀⠀⠀⣀⠂⡌⢀⠈⠀⡁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡡",
+	" ⠐⡠⠁⢌⠠⠒⡈⠄⠀⠀⠀⠀⠀⠀⡐⠄⢮⣐⠣⣄⠡⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+	" ⠊⠄⡑⠠⢂⠁⠆⢀⠠⠒⠤⢀⠀⡰⢈⡜⢮⣇⡛⢤⢋⡔⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+	" ⡡⠘⠠⢁⠂⣉⠰⠀⠆⢠⡐⠡⢂⠡⠒⢌⠲⠩⠜⡀⠂⠈⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡡",
+	" ⠡⠌⡁⠂⢌⠀⠆⢡⠚⡌⢡⠃⢌⠂⡉⠄⠃⠁⠀⠀⢤⡱⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+	" ⡐⡈⠤⠑⡀⠊⠌⡄⠁⠈⠤⣉⠰⡈⢐⠈⠄⠀⠠⠙⢢⠣⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡐",
+	" ⠒⡀⠆⠡⠐⣉⠰⠠⠀⠀⠒⡠⠑⡄⠃⠌⠀⠀⠀⠤⣀⡤⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+	" ⠆⠡⠌⢂⠡⠄⢂⠡⠃⠀⢁⠢⢑⠠⢉⠂⠠⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+	" ⡐⠡⡈⢂⠔⠨⠄⢂⠀⠀⡀⠆⣁⠢⠁⡌⢰⢩⠖⡔⢶⡠⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡐",
+	" ⡠⠡⠐⠡⣈⠂⢅⠂⠀⠀⡐⠄⡀⠂⢅⢢⡁⢎⡘⠌⠠⠙⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡠",
+	" ⢁⢂⠉⠔⠠⡈⠄⢊⢀⠰⡐⠠⢀⠉⠄⢂⠹⣄⠲⣈⢄⡐⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢁",
+	" ⠂⡄⠊⠌⡐⠠⠑⣈⠐⢢⠡⠘⠠⢈⠐⠠⠁⠌⡱⠌⠦⡑⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠂",
+	" ⡡⠄⠉⠒⠈⠁⠈⠀⠈⢆⠡⢃⠁⠂⠌⡐⠀⢀⠀⠌⠐⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡡",
+	" ⠀⠀⠀⠀⠀⠀⠀⠀⢌⠢⡑⠌⡌⠌⡐⠀⠄⠂⠀⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+	" ⠀⠀⠀⠀⠀⠀⢰⢁⠢⢡⠘⡐⢌⠢⡁⠌⠀⠀⠀⠄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
 }
+
+// portraitWidth is the visual character width of the portrait art lines above.
+const portraitWidth = 50
 
 // Name banner — figlet-style block letters for MOHITH / AKSHAY
 var nameBanner = []string{
@@ -52,10 +56,9 @@ var nameBanner = []string{
 	"╚═╝  ╚═╝ ╚═╝  ╚═╝ ╚══════╝ ╚═╝  ╚═╝ ╚═╝  ╚═╝     ╚═╝   ",
 }
 
-const portraitVisibleWidth = 22
 const TaglineText = "is an engineer, builder & creator who turns ideas into products."
 
-func BannerLines() int       { return len(nameBanner) }
+func BannerLines() int         { return len(nameBanner) }
 func NameBannerLines() []string { return nameBanner }
 
 func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, starBright []bool, taglineIdx int, taglineDone bool, cursorBlink bool, glitchFrames int, glitchRunes [][]rune, lastCommit string, sessionID string, connectedSecs int, buildInfo string, scanlineY int, idleGlitch bool, theme Theme) string {
@@ -66,10 +69,10 @@ func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, starBright [
 	starStyle       := r.NewStyle().Foreground(lipgloss.Color(theme.StarDim))
 	brightStarStyle := r.NewStyle().Foreground(lipgloss.Color(theme.StarBright))
 
-	// Responsive: show portrait only when terminal wide enough
-	showPortrait := width >= 90
+	// Show portrait only on wide-enough terminals (portrait=50 + gap=4 + banner~62 = 116)
+	showPortrait := width >= 115
 
-	// ── LEFT COLUMN: portrait ─────────────────────────────────────────────
+	// ── LEFT COLUMN: portrait ──────────────────────────────────────────────
 	var leftCol strings.Builder
 	portReveal := revealIdx * 2
 	if portReveal > len(portraitArt) {
@@ -78,16 +81,10 @@ func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, starBright [
 
 	if showPortrait {
 		for i, line := range portraitArt {
-			// Trim to portraitVisibleWidth to avoid overflow
-			runes := []rune(line)
-			if len(runes) > portraitVisibleWidth {
-				runes = runes[:portraitVisibleWidth]
-			}
-			trimmed := string(runes)
 			if i < portReveal {
-				leftCol.WriteString(cyanStyle.Render(trimmed))
+				leftCol.WriteString(cyanStyle.Render(line))
 			} else {
-				leftCol.WriteString(strings.Repeat(" ", portraitVisibleWidth))
+				leftCol.WriteString(strings.Repeat(" ", portraitWidth))
 			}
 			leftCol.WriteString("\n")
 		}
@@ -97,7 +94,7 @@ func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, starBright [
 	var rightCol strings.Builder
 
 	// Stars — independent twinkle
-	var starChars = []string{"✧", "*", "·", "✦", "*", "✧", "·", "✦"}
+	starChars := []string{"✧", "*", "·", "✦", "*", "✧", "·", "✦"}
 	var starRow1, starRow2 strings.Builder
 	for i, ch := range starChars {
 		bright := i < len(starBright) && starBright[i]
@@ -136,7 +133,7 @@ func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, starBright [
 		}
 	}
 
-	// Subtitle
+	// Surname subtitle
 	if revealIdx >= len(nameBanner) {
 		rightCol.WriteString(magentaStyle.Render("  ·  D U G G I R A L A  ·") + "\n")
 	} else {
@@ -148,44 +145,40 @@ func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, starBright [
 
 	// Typewriter tagline
 	if revealIdx >= len(nameBanner) {
-		visible := []rune(TaglineText)[:taglineIdx]
+		runes := []rune(TaglineText)
+		end := taglineIdx
+		if end > len(runes) { end = len(runes) }
 		cursor := ""
-		if taglineIdx < len([]rune(TaglineText)) {
+		if taglineIdx < len(runes) {
 			cursor = "█"
 		} else if cursorBlink {
 			cursor = "█"
 		}
-		rightCol.WriteString("  " + whiteStyle.Render(string(visible)+cursor) + "\n")
+		rightCol.WriteString("  " + whiteStyle.Render(string(runes[:end])+cursor) + "\n")
 	} else {
 		rightCol.WriteString("\n")
 	}
 
-	// Bio lines — updated with SenseOps
+	// Bio lines
 	bioLines := []string{
-		dimStyle.Render("Founder & Lead Engineer of"),
-		magentaStyle.Render("Webcraft Studios") + dimStyle.Render(","),
-		dimStyle.Render("building full-stack apps,"),
-		dimStyle.Render("Computer Vision pipelines,"),
-		dimStyle.Render("and scalable AI perception systems."),
+		dimStyle.Render("Founder & Lead Engineer of") + " " + magentaStyle.Render("Webcraft Studios") + dimStyle.Render(","),
+		dimStyle.Render("building full-stack apps, CV pipelines, and AI systems."),
 		"",
-		dimStyle.Render("B.Tech ECE @ Manipal Institute of Technology"),
-		dimStyle.Render("Bengaluru  ·  Aug 2023 – Jul 2027"),
+		dimStyle.Render("B.Tech ECE  ·  Manipal Institute of Technology, Bengaluru"),
+		dimStyle.Render("Aug 2023 – Jul 2027"),
 		"",
-		dimStyle.Render("President, ") + cyanStyle.Render("MBOSC"),
+		dimStyle.Render("President, ") + cyanStyle.Render("MBOSC") + dimStyle.Render("  ·  Manipal Bengaluru Open Source Community"),
 		"",
-		dimStyle.Render("Software Engineering Intern @ ") + cyanStyle.Render("SenseOps"),
-		dimStyle.Render("CV Research Intern @ ") + cyanStyle.Render("ISRO – LEOS"),
+		dimStyle.Render("SWE Intern @ ") + cyanStyle.Render("SenseOps Tech Solutions") + dimStyle.Render("  (May–Jul 2025)"),
+		dimStyle.Render("CV Research Intern @ ") + cyanStyle.Render("ISRO – LEOS") + dimStyle.Render("  (Dec 2025–Jan 2026)"),
 	}
 	for _, line := range bioLines {
 		rightCol.WriteString("  " + line + "\n")
 	}
 
-	// ── COMBINE columns ───────────────────────────────────────────────────
-	leftContent  := leftCol.String()
-	rightContent := rightCol.String()
-
-	leftLines  := strings.Split(leftContent, "\n")
-	rightLines := strings.Split(rightContent, "\n")
+	// ── COMBINE columns ────────────────────────────────────────────────────
+	leftLines  := strings.Split(leftCol.String(), "\n")
+	rightLines := strings.Split(rightCol.String(), "\n")
 
 	maxLines := len(rightLines)
 	if showPortrait && len(leftLines) > maxLines {
@@ -196,7 +189,7 @@ func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, starBright [
 
 	var combined strings.Builder
 	combined.WriteString("\n")
-	gap := "  "
+	gap := "    " // gap between portrait and name banner
 
 	availHeight := height - 6
 	if availHeight < 10 { availHeight = maxLines }
@@ -210,10 +203,10 @@ func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, starBright [
 
 		if showPortrait {
 			if i < len(leftLines) { left = leftLines[i] }
-			// Pad left column to consistent width
+			// Pad left column to consistent width so right column stays aligned
 			lVis := len([]rune(stripAnsi(left)))
-			if lVis < portraitVisibleWidth {
-				left += strings.Repeat(" ", portraitVisibleWidth-lVis)
+			if lVis < portraitWidth {
+				left += strings.Repeat(" ", portraitWidth-lVis)
 			}
 			combined.WriteString(" " + left + gap + right + "\n")
 		} else {
@@ -221,13 +214,14 @@ func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, starBright [
 		}
 	}
 
-	// Session info line
+	// Session / commit info
 	if sessionID != "" {
 		mins := connectedSecs / 60
 		secs := connectedSecs % 60
 		metaStyle    := r.NewStyle().Foreground(lipgloss.Color(theme.VeryDim))
 		sessionStyle := r.NewStyle().Foreground(lipgloss.Color(theme.FooterText))
-		combined.WriteString("\n " + sessionStyle.Render(fmt.Sprintf("session: %s  connected: %02d:%02d", sessionID, mins, secs)) + "  " + metaStyle.Render(buildInfo) + "\n")
+		combined.WriteString("\n " + sessionStyle.Render(fmt.Sprintf("session: %s  connected: %02d:%02d", sessionID, mins, secs)) +
+			"  " + metaStyle.Render(buildInfo) + "\n")
 	}
 	if lastCommit != "" {
 		commitStyle := r.NewStyle().Foreground(lipgloss.Color(theme.VeryDim)).Italic(true)
@@ -236,7 +230,7 @@ func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, starBright [
 
 	result := combined.String()
 
-	// CRT scanline overlay — use theme color
+	// CRT scanline overlay
 	if scanlineY >= 0 {
 		lines := strings.Split(result, "\n")
 		if scanlineY < len(lines) {
@@ -252,15 +246,13 @@ func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, starBright [
 	// Idle ambient glitch
 	if idleGlitch {
 		glitchChars := []rune{'▓', '░', '▒', '▌', '▐', '╬', '╫', '╪'}
-		lines := strings.Split(result, "\n")
+		lines  := strings.Split(result, "\n")
 		glitchS := r.NewStyle().Foreground(lipgloss.Color(theme.VeryDim))
 		for i, line := range lines {
 			visual := []rune(stripAnsi(line))
 			for j := range visual {
-				if visual[j] != ' ' && len(visual) > 0 {
-					if (i*len(visual)+j)%13 == 0 {
-						visual[j] = glitchChars[(i*7+j*3)%len(glitchChars)]
-					}
+				if visual[j] != ' ' && (i*len(visual)+j)%13 == 0 {
+					visual[j] = glitchChars[(i*7+j*3)%len(glitchChars)]
 				}
 			}
 			lines[i] = glitchS.Render(string(visual))
@@ -271,7 +263,7 @@ func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, starBright [
 	return result
 }
 
-// stripAnsi removes ANSI escape codes for width calculation
+// stripAnsi removes ANSI escape codes for visual-width calculation.
 func stripAnsi(s string) string {
 	var result strings.Builder
 	inEscape := false
