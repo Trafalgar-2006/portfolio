@@ -8,13 +8,13 @@ import (
 
 // RenderAlert renders the "Unauthorized Access" fake alert (phase 0)
 // or the "just kidding" reveal (phase 1)
-func RenderAlert(r *lipgloss.Renderer, width, height, phase int) string {
+func RenderAlert(r *lipgloss.Renderer, width, height, phase int, theme Theme) string {
 	var b strings.Builder
 
 	if phase == 0 {
 		redBg    := r.NewStyle().Background(lipgloss.Color("#FF0000")).Foreground(lipgloss.Color("#FFFFFF")).Bold(true)
 		redStyle := r.NewStyle().Foreground(lipgloss.Color("#FF5555")).Bold(true)
-		dimStyle := r.NewStyle().Foreground(lipgloss.Color("#888888"))
+		dimStyle := r.NewStyle().Foreground(lipgloss.Color(theme.DimMid))
 
 		boxW := 55
 		if width < boxW+4 {
@@ -44,8 +44,8 @@ func RenderAlert(r *lipgloss.Renderer, width, height, phase int) string {
 
 	} else {
 		// Phase 1: just kidding
-		dimStyle  := r.NewStyle().Foreground(lipgloss.Color("#888888"))
-		cyanStyle := r.NewStyle().Foreground(lipgloss.Color("#00DFDF"))
+		dimStyle  := r.NewStyle().Foreground(lipgloss.Color(theme.DimMid))
+		cyanStyle := r.NewStyle().Foreground(lipgloss.Color(theme.Primary))
 
 		pad := height / 2
 		for i := 0; i < pad; i++ {

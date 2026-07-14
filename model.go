@@ -13,6 +13,13 @@ import (
 	"github.com/trafalgar-2006/ssh-portfolio/views"
 )
 
+// Build info — injected via ldflags at build time
+var (
+	BuildVersion = "dev"
+	BuildCommit  = "unknown"
+	BuildDate    = "unknown"
+)
+
 type View int
 
 const (
@@ -35,6 +42,14 @@ func tickCmd() tea.Cmd {
 	})
 }
 
+const numStars = 8
+
+// StarState tracks per-star independent twinkle timing
+type StarState struct {
+	Bright   bool
+	FlipAt   int // tickCount when this star should next flip
+}
+
 type Model struct {
 	renderer  *lipgloss.Renderer
 	width     int
@@ -44,9 +59,9 @@ type Model struct {
 
 	// Matrix rain animation (pre-boot)
 	matrixCols    []views.MatrixColumn
-	matrixLocked  map[[2]int]rune // cells permanently locked to name chars
-	matrixPending [][2]int        // cells not yet locked
-	matrixPhase   int             // 0=rain, 1=locking, 2=fade
+	matrixLocked  map[[2]int]rune
+	matrixPending [][2]int
+	matrixPhase   int
 	matrixNameX   int
 	matrixNameY   int
 
@@ -54,49 +69,77 @@ type Model struct {
 	bootLines     []views.BootLine
 	bootSchedule  []int
 	bootVisible   int
-	bootStartTick int // tickCount when ViewBoot was entered
+	bootStartTick int
 
 	// Alert animation
-	alertPhase     int // 0=warning, 1=just kidding
-	alertPhaseTick int // tickCount when phase started
+	alertPhase     int
+	alertPhaseTick int
 
 	// Home / Splash
-	currentView View
-	activeTab   int
-	revealIdx   int  // banner reveal
-	glitchFrames int  // >0 = banner is glitching
-	glitchRunes  [][]rune // corrupted banner lines during glitch
-	taglineIdx  int  // typewriter char index
-	taglineDone bool
-	cursorBlink bool
-	cursorLeft  int // blink cycles remaining after typewrite done
-	blink        bool
-	lastCommit   string // cached GitHub commit message
+	currentView  View
+	activeTab    int
+	revealIdx    int
+	glitchFrames int
+	glitchRunes  [][]rune
+	taglineIdx   int
+	taglineDone  bool
+	cursorBlink  bool
+	cursorLeft   int
+	lastCommit   string
+
+	// Independent star twinkle
+	stars [numStars]StarState
+
+	// CRT scanline sweep
+	scanlineY int // -1 = disabled, 0..height = current line
+
+	// Idle ambient glitch
+	idleTicks  int  // resets on any keypress
+	idleGlitch bool // true for exactly 1 tick (one-frame flicker)
+
+	// Session info
+	sessionID    string
+	sessionStart time.Time
+
+	// Theme
+	themeIdx   int // index into views.Themes
+	themeFlash int // counts down from 4, triggers flash overlay
 
 	// Wipe transition
-	wipePhase   int  // 0=none, 1=wipe-out, 2=wipe-in
-	wipeLines   int  // lines exposed so far
-	pendingView View // view to switch to after wipe-out
-	pendingTab  int  // tab to activate after wipe-out
+	wipePhase   int
+	wipeLines   int
+	pendingView View
+	pendingTab  int
 
 	// Projects
 	projectCursor  int
 	projectScroll  int
-	projectsReveal int // cascade drop-in
-	tagPopReveal   int // tag pop in detail
+	projectsReveal int
+	tagPopReveal   int
 	lastCursor     int
 	livePulse      bool
 
+	// Projects — smooth highlight + momentum
+	highlightY float64 // visual lerp position of the selection bar
+	velocity   float64 // scroll momentum (decays each tick)
+
+	// Projects — decrypt reveal on open
+	decryptIdx   int      // chars revealed so far in description
+	decryptRunes []rune   // scrambled desc runes, resolved left-to-right
+
+	// Vim number prefix buffer (e.g. "3" before j)
+	numBuf string
+
 	// Contacts
 	contactsReveal int
-	sshFlash       int // counts down from 4
+	sshFlash       int
 }
 
 func NewModel(r *lipgloss.Renderer) Model {
 	if r == nil {
 		r = lipgloss.DefaultRenderer()
 	}
-	lines := views.NewBootSequence()
+	lines, sid := views.NewBootSequence()
 	schedule := make([]int, len(lines))
 	t := 0
 	for i, l := range lines {
@@ -115,6 +158,15 @@ func NewModel(r *lipgloss.Renderer) Model {
 	// Shuffle pending so cells lock in random order
 	rand.Shuffle(len(pending), func(i, j int) { pending[i], pending[j] = pending[j], pending[i] })
 
+	// Initialise stars with random independent flip times
+	var stars [numStars]StarState
+	for i := range stars {
+		stars[i] = StarState{
+			Bright: rand.Intn(2) == 0,
+			FlipAt: rand.Intn(30) + 10, // 0.5s–1.5s first flip
+		}
+	}
+
 	return Model{
 		renderer:     r,
 		width:        w,
@@ -129,6 +181,10 @@ func NewModel(r *lipgloss.Renderer) Model {
 		bootSchedule: schedule,
 		bootVisible:  0,
 		cursorLeft:   6,
+		sessionID:    sid,
+		sessionStart: time.Now(),
+		stars:        stars,
+		scanlineY:    -1,
 	}
 }
 
@@ -145,10 +201,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
+		// Reset idle counter on any keypress
+		m.idleTicks = 0
 		switch msg.String() {
 		case "ctrl+c":
 			m.quitting = true
 			return m, tea.Quit
+
+		case "t":
+			// Cycle theme with flash
+			m.themeIdx = (m.themeIdx + 1) % len(views.Themes)
+			m.themeFlash = 4
+			return m, nil
 
 		case "q":
 			if m.currentView == ViewHome {
@@ -189,26 +253,63 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "up", "k":
 			if m.currentView == ViewProjects {
+				steps := m.consumeNum(1)
 				prev := m.projectCursor
-				m.projectCursor--
+				m.projectCursor -= steps
 				if m.projectCursor < 0 {
-					m.projectCursor = len(views.AllProjects) - 1
+					m.projectCursor = 0
 				}
 				if m.projectCursor != prev {
 					m.tagPopReveal = 0
+					m.velocity -= float64(steps) * 0.4
+					m.startDecrypt()
 				}
 			}
 			return m, nil
 
 		case "down", "j":
 			if m.currentView == ViewProjects {
+				steps := m.consumeNum(1)
 				prev := m.projectCursor
-				m.projectCursor++
+				m.projectCursor += steps
 				if m.projectCursor >= len(views.AllProjects) {
-					m.projectCursor = 0
+					m.projectCursor = len(views.AllProjects) - 1
 				}
 				if m.projectCursor != prev {
 					m.tagPopReveal = 0
+					m.velocity += float64(steps) * 0.4
+					m.startDecrypt()
+				}
+			}
+			return m, nil
+
+		case "g":
+			// gg — handled as two consecutive g presses
+			if m.currentView == ViewProjects {
+				if m.numBuf == "g" {
+					m.numBuf = ""
+					prev := m.projectCursor
+					m.projectCursor = 0
+					if m.projectCursor != prev { m.tagPopReveal = 0; m.startDecrypt() }
+				} else {
+					m.numBuf = "g"
+				}
+			}
+			return m, nil
+
+		case "G":
+			if m.currentView == ViewProjects {
+				prev := m.projectCursor
+				m.projectCursor = len(views.AllProjects) - 1
+				if m.projectCursor != prev { m.tagPopReveal = 0; m.startDecrypt() }
+				m.numBuf = ""
+			}
+			return m, nil
+
+		case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9":
+			if m.currentView == ViewProjects {
+				if m.numBuf != "g" {
+					m.numBuf += msg.String()
 				}
 			}
 			return m, nil
@@ -313,8 +414,37 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tickCmd()
 		}
 
+		// ── Independent star twinkle ──────────────────────────────
+		for i := range m.stars {
+			if m.tickCount >= m.stars[i].FlipAt {
+				m.stars[i].Bright = !m.stars[i].Bright
+				// Next flip in 10–40 ticks (500ms–2000ms)
+				m.stars[i].FlipAt = m.tickCount + 10 + rand.Intn(30)
+			}
+		}
+
+		// ── CRT scanline sweep (every tick, wraps around) ─────────
+		if m.currentView == ViewHome {
+			m.scanlineY = (m.tickCount / 2) % (m.height + 5)
+			if m.scanlineY >= m.height {
+				m.scanlineY = -1 // hide during reset gap
+			}
+		} else {
+			m.scanlineY = -1
+		}
+
+		// ── Idle ambient glitch ────────────────────────────────────
+		m.idleGlitch = false
+		if m.currentView == ViewHome {
+			m.idleTicks++
+			// 400 ticks @ 50ms = 20s idle threshold
+			if m.idleTicks >= 400 && m.tickCount%400 == 0 {
+				m.idleGlitch = true
+			}
+		}
+
 		// ── Home / Splash animations ───────────────────────────────
-		m.blink = !m.blink
+
 
 		if m.currentView == ViewHome {
 			if m.revealIdx < views.BannerLines() {
@@ -347,18 +477,42 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
+		// ── Theme flash decay ───────────────────────────────────────
+		if m.themeFlash > 0 {
+			m.themeFlash--
+		}
+
 		// ── Live pulse (always, every 10 ticks = 500ms) ───────────
 		if m.tickCount%10 == 0 {
 			m.livePulse = !m.livePulse
 		}
 
-		// ── Project cascade + tag pop ─────────────────────────────
+		// ── Project cascade + tag pop + lerp + decrypt ────────────
 		if m.currentView == ViewProjects {
 			if m.tickCount%2 == 0 && m.projectsReveal < len(views.AllProjects) {
 				m.projectsReveal++
 			}
 			if m.tagPopReveal < len(views.AllProjects[m.projectCursor].Tags) {
 				m.tagPopReveal++
+			}
+
+			// Lerp highlightY toward projectCursor (smooth slide)
+			target := float64(m.projectCursor)
+			m.highlightY += (target - m.highlightY) * 0.25
+			if abs64(m.highlightY-target) < 0.01 {
+				m.highlightY = target
+			}
+
+			// Momentum decay (rubber band feel)
+			if abs64(m.velocity) > 0.01 {
+				m.velocity *= 0.78
+			} else {
+				m.velocity = 0
+			}
+
+			// Decrypt reveal — advance one char per tick
+			if m.decryptIdx < len(m.decryptRunes) {
+				m.decryptIdx++
 			}
 		}
 
@@ -385,27 +539,37 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m Model) View() string {
 	if m.quitting {
-		return "\n  Thanks for visiting! ✦\n\n"
+		r := m.renderer
+		cyanS := r.NewStyle().Foreground(lipgloss.Color("#00DFDF"))
+		dimS  := r.NewStyle().Foreground(lipgloss.Color("#555555"))
+		return "\n  " + cyanS.Render("✶ Thanks for visiting!") + "\n  " + dimS.Render("github.com/trafalgar-2006/portflio") + "\n  " + dimS.Render("ssh.mohith.is-a.dev") + "\n\n"
 	}
 
 	var content string
+	theme := views.Themes[m.themeIdx]
 
 	switch m.currentView {
 	case ViewMatrix:
-		return views.RenderMatrix(m.renderer, m.width, m.height, m.matrixCols, m.matrixLocked, m.matrixPhase == 2)
+		return views.RenderMatrix(m.renderer, m.width, m.height, m.matrixCols, m.matrixLocked, m.matrixPhase == 2, theme)
 	case ViewBoot:
-		return views.RenderBoot(m.renderer, m.width, m.height, m.bootVisible, m.bootLines)
+		return views.RenderBoot(m.renderer, m.width, m.height, m.bootVisible, m.bootLines, theme)
 	case ViewAlert:
-		return views.RenderAlert(m.renderer, m.width, m.height, m.alertPhase)
+		return views.RenderAlert(m.renderer, m.width, m.height, m.alertPhase, theme)
 	case ViewHome:
-		content = views.RenderHome(m.renderer, m.width, m.height, m.revealIdx, m.blink, m.taglineIdx, m.taglineDone, m.cursorBlink, m.glitchFrames, m.glitchRunes, m.lastCommit)
-		content += m.renderTabBar()
+		starBright := make([]bool, numStars)
+		for i, s := range m.stars {
+			starBright[i] = s.Bright
+		}
+		buildInfo := fmt.Sprintf("build %s · go1.22", BuildCommit)
+		connectedSecs := int(time.Since(m.sessionStart).Seconds())
+		content = views.RenderHome(m.renderer, m.width, m.height, m.revealIdx, starBright, m.taglineIdx, m.taglineDone, m.cursorBlink, m.glitchFrames, m.glitchRunes, m.lastCommit, m.sessionID, connectedSecs, buildInfo, m.scanlineY, m.idleGlitch, theme)
+		content += m.renderTabBar(theme)
 	case ViewProjects:
-		content = views.RenderProjects(m.renderer, m.width, m.height, m.projectCursor, m.projectScroll, m.projectsReveal, m.tagPopReveal, m.livePulse)
+		content = views.RenderProjects(m.renderer, m.width, m.height, m.projectCursor, m.projectScroll, m.projectsReveal, m.tagPopReveal, m.livePulse, m.highlightY, m.decryptIdx, m.decryptRunes, theme)
 	case ViewAbout:
-		content = views.RenderAbout(m.renderer, m.width, m.height)
+		content = views.RenderAbout(m.renderer, m.width, m.height, theme)
 	case ViewContacts:
-		content = views.RenderContacts(m.renderer, m.width, m.height, m.contactsReveal, m.sshFlash)
+		content = views.RenderContacts(m.renderer, m.width, m.height, m.contactsReveal, m.sshFlash, theme)
 	default:
 		return ""
 	}
@@ -416,10 +580,8 @@ func (m Model) View() string {
 		for i := range lines {
 			var blank bool
 			if m.wipePhase == 1 {
-				// Wipe-out: blank lines from top downward
 				blank = i < m.wipeLines
 			} else {
-				// Wipe-in: reveal lines from top downward
 				blank = i >= m.wipeLines
 			}
 			if blank {
@@ -428,6 +590,23 @@ func (m Model) View() string {
 		}
 		content = strings.Join(lines, "\n")
 	}
+
+	// Global status footer bar — shown on all non-intro screens
+	if m.currentView >= ViewHome {
+		content += m.renderFooterBar()
+	}
+
+	// Theme flash overlay — a brief bright flicker on theme switch
+	if m.themeFlash > 0 {
+		r := m.renderer
+		flashAlpha := float64(m.themeFlash) / 4.0
+		_ = flashAlpha
+		theme := views.Themes[m.themeIdx]
+		flashS := r.NewStyle().Foreground(lipgloss.Color(theme.Primary)).Bold(true)
+		name   := "  ✨ theme: " + theme.Name
+		content = flashS.Render(name) + "\n" + content
+	}
+
 	return content
 }
 
@@ -439,11 +618,11 @@ func (m *Model) startWipe(target View, tab int) {
 	m.wipeLines = 0
 }
 
-func (m Model) renderTabBar() string {
+func (m Model) renderTabBar(theme views.Theme) string {
 	r := m.renderer
-	activeStyle   := r.NewStyle().Bold(true).Background(lipgloss.Color("#00DFDF")).Foreground(lipgloss.Color("#0A0A0A")).Padding(0, 1)
-	inactiveStyle := r.NewStyle().Foreground(lipgloss.Color("#555555"))
-	hintStyle     := r.NewStyle().Foreground(lipgloss.Color("#444444")).Italic(true)
+	activeStyle   := r.NewStyle().Bold(true).Background(theme.TabActive).Foreground(lipgloss.Color("#0A0A0A")).Padding(0, 1)
+	inactiveStyle := r.NewStyle().Foreground(lipgloss.Color(theme.Dim))
+	hintStyle     := r.NewStyle().Foreground(lipgloss.Color(theme.VeryDim)).Italic(true)
 	sep           := "  "
 
 	var tabs []string
@@ -455,8 +634,9 @@ func (m Model) renderTabBar() string {
 		}
 	}
 
-	tabBar := "\n " + joinStrings(tabs, sep) + "\n"
-	tabBar += "\n " + hintStyle.Render("[← → tabs · enter open · ↑↓ browse · q quit]") + "\n"
+	themeName := r.NewStyle().Foreground(lipgloss.Color(theme.Primary)).Italic(true).Render("[t] "+theme.Name)
+	tabBar := "\n " + joinStrings(tabs, sep) + "   " + themeName + "\n"
+	tabBar += "\n " + hintStyle.Render("[← → tabs · enter open · ↑↓ browse · t theme · q quit]") + "\n"
 	return tabBar
 }
 
@@ -469,6 +649,41 @@ func joinStrings(strs []string, sep string) string {
 		result += s
 	}
 	return result
+}
+
+func (m Model) renderFooterBar() string {
+	r := m.renderer
+	theme  := views.Themes[m.themeIdx]
+	barBg    := r.NewStyle().Foreground(lipgloss.Color(theme.FooterText)).Background(lipgloss.Color(theme.FooterBg))
+	sidStyle := r.NewStyle().Foreground(lipgloss.Color(theme.Primary)).Background(lipgloss.Color(theme.FooterBg))
+	sepStyle := r.NewStyle().Foreground(lipgloss.Color(theme.Dim)).Background(lipgloss.Color(theme.FooterBg))
+	qStyle   := r.NewStyle().Foreground(lipgloss.Color(theme.VeryDim)).Background(lipgloss.Color(theme.FooterBg)).Italic(true)
+
+	secs := int(time.Since(m.sessionStart).Seconds())
+	mins := secs / 60
+	s    := secs % 60
+
+	viewName := "home"
+	switch m.currentView {
+	case ViewProjects: viewName = "projects"
+	case ViewAbout:    viewName = "about"
+	case ViewContacts: viewName = "contacts"
+	}
+
+	sid := m.sessionID
+	if sid == "" { sid = "--------" }
+
+	bar := sidStyle.Render("  "+sid) +
+		sepStyle.Render("  ·  ") +
+		barBg.Render(fmt.Sprintf("connected: %02d:%02d", mins, s)) +
+		sepStyle.Render("  ·  ") +
+		barBg.Render(viewName) +
+		sepStyle.Render("  ·  ") +
+		barBg.Render(theme.Name) +
+		sepStyle.Render("  ·  ") +
+		qStyle.Render("[q] quit  ")
+
+	return "\n" + bar + "\n"
 }
 
 // commitMsg carries the last GitHub commit line back to the model
@@ -540,4 +755,50 @@ func glitchBanner() [][]rune {
 		result[i] = runes
 	}
 	return result
+}
+
+// consumeNum reads m.numBuf as an integer (defaulting to def if empty), then clears it.
+func (m *Model) consumeNum(def int) int {
+	if m.numBuf == "" || m.numBuf == "g" {
+		m.numBuf = ""
+		return def
+	}
+	n := 0
+	for _, ch := range m.numBuf {
+		if ch >= '0' && ch <= '9' {
+			n = n*10 + int(ch-'0')
+		}
+	}
+	m.numBuf = ""
+	if n == 0 {
+		return def
+	}
+	return n
+}
+
+// startDecrypt seeds a fresh decrypt animation for the current project's description.
+func (m *Model) startDecrypt() {
+	if m.projectCursor >= len(views.AllProjects) {
+		return
+	}
+	desc := []rune(views.AllProjects[m.projectCursor].Description)
+	scramble := []rune("!@#$%^&*<>?/\\|~`[]{}ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
+	runes := make([]rune, len(desc))
+	for i, r := range desc {
+		if r == ' ' {
+			runes[i] = ' '
+		} else {
+			runes[i] = scramble[rand.Intn(len(scramble))]
+		}
+	}
+	m.decryptRunes = runes
+	m.decryptIdx = 0
+}
+
+// abs64 returns the absolute value of a float64.
+func abs64(x float64) float64 {
+	if x < 0 {
+		return -x
+	}
+	return x
 }

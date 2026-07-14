@@ -7,7 +7,11 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -o ssh-portfolio .
+ARG BUILD_COMMIT=unknown
+ARG BUILD_DATE=unknown
+RUN CGO_ENABLED=0 GOOS=linux go build \
+    -ldflags="-X main.BuildCommit=${BUILD_COMMIT} -X main.BuildDate=${BUILD_DATE}" \
+    -o ssh-portfolio .
 
 FROM alpine:latest
 

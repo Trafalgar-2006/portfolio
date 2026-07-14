@@ -15,14 +15,16 @@ type BootLine struct {
 	DelayTicks int   // ticks before next line appears (at 50ms/tick)
 }
 
-// NewBootSequence builds the boot lines with a unique random fingerprint
-func NewBootSequence() []BootLine {
+// NewBootSequence builds the boot lines with a unique random fingerprint and session ID
+func NewBootSequence() ([]BootLine, string) {
 	fp := randomFingerprint()
-	return []BootLine{
-		{"> connecting to ssh-portfolio:22...", "dim", 6},
+	sid := randomSessionID()
+	lines := []BootLine{
+		{"> connecting to ssh.mohith.is-a.dev:22...", "dim", 6},
 		{"  SSH-2.0-OpenSSH_9.6p1 portfolio", "dim", 4},
 		{"> negotiating: chacha20-poly1305@openssh.com", "dim", 5},
 		{fmt.Sprintf("> host key: SHA256:%s", fp), "dim", 5},
+		{fmt.Sprintf("> session: %s", sid), "cyan", 3},
 		{"> løâdïñg modules...", "dim", 3},
 		{"> ERROR: signal lost — attempting recovery...", "red", 8},
 		{"> .", "dim", 4},
@@ -32,6 +34,7 @@ func NewBootSequence() []BootLine {
 		{"> decrypting portfolio...", "dim", 4},
 		{"> ✓ Identity verified. Welcome, visitor.", "green", 10},
 	}
+	return lines, sid
 }
 
 func randomFingerprint() string {
@@ -43,11 +46,24 @@ func randomFingerprint() string {
 	return string(b)
 }
 
-func RenderBoot(r *lipgloss.Renderer, width, height, visibleLines int, lines []BootLine) string {
-	dimStyle   := r.NewStyle().Foreground(lipgloss.Color("#666666"))
+func randomSessionID() string {
+	const hex = "0123456789ABCDEF"
+	b := make([]byte, 9)
+	for i := range b {
+		if i == 4 {
+			b[i] = '-'
+			continue
+		}
+		b[i] = hex[rand.Intn(len(hex))]
+	}
+	return string(b)
+}
+
+func RenderBoot(r *lipgloss.Renderer, width, height, visibleLines int, lines []BootLine, theme Theme) string {
+	dimStyle   := r.NewStyle().Foreground(lipgloss.Color(theme.Dim))
 	redStyle   := r.NewStyle().Foreground(lipgloss.Color("#FF5555")).Bold(true)
-	greenStyle := r.NewStyle().Foreground(lipgloss.Color("#50FA7B")).Bold(true)
-	cyanStyle  := r.NewStyle().Foreground(lipgloss.Color("#00DFDF"))
+	greenStyle := r.NewStyle().Foreground(lipgloss.Color(theme.Success)).Bold(true)
+	cyanStyle  := r.NewStyle().Foreground(lipgloss.Color(theme.Primary))
 
 	var b strings.Builder
 
@@ -74,6 +90,8 @@ func RenderBoot(r *lipgloss.Renderer, width, height, visibleLines int, lines []B
 			rendered = redStyle.Render(line.Text)
 		case "green":
 			rendered = greenStyle.Render(line.Text)
+		case "cyan":
+			rendered = cyanStyle.Render(line.Text)
 		default:
 			rendered = dimStyle.Render(line.Text)
 		}

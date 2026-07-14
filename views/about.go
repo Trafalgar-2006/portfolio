@@ -1,22 +1,23 @@
 package views
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
 )
 
-func RenderAbout(r *lipgloss.Renderer, width, height int) string {
-	cyanStyle    := r.NewStyle().Foreground(lipgloss.Color("#00DFDF"))
-	dimStyle     := r.NewStyle().Foreground(lipgloss.Color("#888888"))
-	whiteStyle   := r.NewStyle().Foreground(lipgloss.Color("#E0E0E0"))
-	magentaStyle := r.NewStyle().Foreground(lipgloss.Color("#FF6AC1"))
-	goldStyle    := r.NewStyle().Foreground(lipgloss.Color("#FFD700"))
-	greenStyle   := r.NewStyle().Foreground(lipgloss.Color("#50FA7B"))
-	purpleStyle  := r.NewStyle().Foreground(lipgloss.Color("#BD93F9"))
-	orangeStyle  := r.NewStyle().Foreground(lipgloss.Color("#FFB86C"))
-	divider      := dimStyle.Render("  ─────────────────────────────────────────────")
+func RenderAbout(r *lipgloss.Renderer, width, height int, theme Theme) string {
+	cyanStyle    := r.NewStyle().Foreground(lipgloss.Color(theme.Primary))
+	dimStyle     := r.NewStyle().Foreground(lipgloss.Color(theme.DimMid))
+	whiteStyle   := r.NewStyle().Foreground(lipgloss.Color(theme.Text))
+	magentaStyle := r.NewStyle().Foreground(lipgloss.Color(theme.Secondary))
+	goldStyle    := r.NewStyle().Foreground(lipgloss.Color(theme.Accent))
+	greenStyle   := r.NewStyle().Foreground(lipgloss.Color(theme.Success))
+	purpleStyle  := r.NewStyle().Foreground(lipgloss.Color(theme.Purple))
+	orangeStyle  := r.NewStyle().Foreground(lipgloss.Color(theme.Warning))
+	divider      := r.NewStyle().Foreground(lipgloss.Color(theme.Dim)).Render("  ─────────────────────────────────────────────")
 
 	var b strings.Builder
 	b.WriteString("\n")
@@ -72,19 +73,35 @@ func RenderAbout(r *lipgloss.Renderer, width, height int) string {
 	b.WriteString("  " + magentaStyle.Render("SnuqSq Tech Solutions") + "  " + dimStyle.Render("Mar 2025 – Jul 2025") + "\n")
 	b.WriteString("  " + greenStyle.Render("▸ ") + dimStyle.Render("Built and shipped production features") + "\n\n")
 
-	// Skills (re-added since Resume tab is removed)
+	// Skills with bar meters
 	b.WriteString("  " + cyanStyle.Bold(true).Render("◆ Skills") + "\n\n")
 
-	skills := []struct{ cat, items string }{
-		{"AI / ML",       "PyTorch · TensorFlow · LoRA · GGUF · YOLOv7 · TensorRT · OpenCV"},
-		{"Languages",     "Python · Go · TypeScript · JavaScript · C/C++"},
-		{"Web / Backend", "React · Next.js · Node.js · FastAPI · Firebase"},
-		{"Tools",         "Docker · Git · CUDA · NVIDIA Jetson · Linux · AWS"},
+	type skillBar struct{ cat, bar string; pct int }
+	skillBars := []skillBar{
+		{"Python",     "#00DFDF", 95},
+		{"Go",         "#00DFDF", 82},
+		{"TypeScript", "#00DFDF", 75},
+		{"C / C++",    "#00DFDF", 65},
+		{"PyTorch",    "#FF6AC1", 88},
+		{"TensorFlow", "#FF6AC1", 78},
+		{"YOLOv7",     "#FF6AC1", 85},
+		{"TensorRT",   "#FF6AC1", 72},
+		{"React",      "#BD93F9", 80},
+		{"Node.js",    "#BD93F9", 77},
+		{"Docker",     "#50FA7B", 83},
+		{"AWS",        "#50FA7B", 68},
 	}
-	for _, s := range skills {
-		b.WriteString("  " + orangeStyle.Bold(true).Render(s.cat) + "\n")
-		b.WriteString("    " + dimStyle.Render(s.items) + "\n\n")
+	barTotal := 16
+	for _, s := range skillBars {
+		filled := (s.pct * barTotal) / 100
+		empty  := barTotal - filled
+		bar := r.NewStyle().Foreground(lipgloss.Color(s.bar)).Render(strings.Repeat("█", filled)) +
+			dimStyle.Render(strings.Repeat("░", empty))
+		pctStr := fmt.Sprintf("%3d%%", s.pct)
+		namePad := fmt.Sprintf("%-12s", s.cat)
+		b.WriteString("  " + orangeStyle.Render(namePad) + "  " + bar + "  " + dimStyle.Render(pctStr) + "\n")
 	}
+	b.WriteString("\n")
 
 	// Interests
 	b.WriteString("  " + cyanStyle.Bold(true).Render("◆ What drives me") + "\n")

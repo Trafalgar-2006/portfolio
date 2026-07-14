@@ -137,12 +137,12 @@ func cellKindAt(x, y int, cols []MatrixColumn, locked map[[2]int]rune, fade bool
 }
 
 // RenderMatrix renders the full matrix rain frame
-func RenderMatrix(r *lipgloss.Renderer, width, height int, cols []MatrixColumn, locked map[[2]int]rune, fade bool) string {
-	headS   := r.NewStyle().Foreground(lipgloss.Color("#FFFFFF")).Bold(true)
-	brightS := r.NewStyle().Foreground(lipgloss.Color("#00FF41")).Bold(true)
-	midS    := r.NewStyle().Foreground(lipgloss.Color("#00AA00"))
-	dimS    := r.NewStyle().Foreground(lipgloss.Color("#004400"))
-	cyanS   := r.NewStyle().Foreground(lipgloss.Color("#00DFDF")).Bold(true)
+func RenderMatrix(r *lipgloss.Renderer, width, height int, cols []MatrixColumn, locked map[[2]int]rune, fade bool, theme Theme) string {
+	headS   := r.NewStyle().Foreground(lipgloss.Color(theme.MatrixHead)).Bold(true)
+	brightS := r.NewStyle().Foreground(lipgloss.Color(theme.MatrixBright)).Bold(true)
+	midS    := r.NewStyle().Foreground(lipgloss.Color(theme.MatrixMid))
+	dimS    := r.NewStyle().Foreground(lipgloss.Color(theme.MatrixDim))
+	cyanS   := r.NewStyle().Foreground(lipgloss.Color(theme.MatrixLocked)).Bold(true)
 
 	var b strings.Builder
 

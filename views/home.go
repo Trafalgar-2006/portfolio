@@ -1,6 +1,7 @@
 package views
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -79,13 +80,13 @@ func NameBannerLines() []string {
 	return nameBanner
 }
 
-func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, blink bool, taglineIdx int, taglineDone bool, cursorBlink bool, glitchFrames int, glitchRunes [][]rune, lastCommit string) string {
-	cyanStyle     := r.NewStyle().Foreground(lipgloss.Color("#00DFDF"))
-	dimStyle      := r.NewStyle().Foreground(lipgloss.Color("#888888"))
-	whiteStyle    := r.NewStyle().Foreground(lipgloss.Color("#E0E0E0"))
-	magentaStyle  := r.NewStyle().Foreground(lipgloss.Color("#FF6AC1"))
-	starStyle     := r.NewStyle().Foreground(lipgloss.Color("#888888"))
-	brightStarStyle := r.NewStyle().Foreground(lipgloss.Color("#00DFDF"))
+func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, starBright []bool, taglineIdx int, taglineDone bool, cursorBlink bool, glitchFrames int, glitchRunes [][]rune, lastCommit string, sessionID string, connectedSecs int, buildInfo string, scanlineY int, idleGlitch bool, theme Theme) string {
+	cyanStyle       := r.NewStyle().Foreground(lipgloss.Color(theme.Primary))
+	dimStyle        := r.NewStyle().Foreground(lipgloss.Color(theme.Dim))
+	whiteStyle      := r.NewStyle().Foreground(lipgloss.Color(theme.Text))
+	magentaStyle    := r.NewStyle().Foreground(lipgloss.Color(theme.Secondary))
+	starStyle       := r.NewStyle().Foreground(lipgloss.Color(theme.StarDim))
+	brightStarStyle := r.NewStyle().Foreground(lipgloss.Color(theme.StarBright))
 
 	// Calculate available space
 	maxContentWidth := width - 4
@@ -115,13 +116,31 @@ func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, blink bool, 
 	// Right column: name + bio info
 	var rightCol strings.Builder
 
-	// Stars decoration at top — blink on slow tick
-	if blink {
-		rightCol.WriteString(starStyle.Render("    ✧") + brightStarStyle.Render("*") + starStyle.Render("·✦") + "\n")
-	} else {
-		rightCol.WriteString(starStyle.Render("    · ") + brightStarStyle.Render("✦") + starStyle.Render("·· ") + "\n")
+	// Stars decoration at top — each star blinks independently
+	var starChars = []string{"✧", "*", "·", "✦", "*", "✧", "·", "✦"}
+	var starRow1, starRow2 strings.Builder
+	for i, ch := range starChars {
+		bright := i < len(starBright) && starBright[i]
+		var s string
+		if bright {
+			s = brightStarStyle.Render(ch)
+		} else {
+			s = starStyle.Render(ch)
+		}
+		if i < 4 {
+			starRow1.WriteString(s)
+			if i < 3 {
+				starRow1.WriteString(" ")
+			}
+		} else {
+			starRow2.WriteString(s)
+			if i < 7 {
+				starRow2.WriteString(" ")
+			}
+		}
 	}
-	rightCol.WriteString(starStyle.Render(" +") + "     " + starStyle.Render("*") + "\n")
+	rightCol.WriteString("    " + starRow1.String() + "\n")
+	rightCol.WriteString(" + " + starRow2.String() + "\n")
 	rightCol.WriteString("\n")
 
 	// Name banner — reveal one line per tick, glitch on completion
@@ -240,13 +259,60 @@ func RenderHome(r *lipgloss.Renderer, width, height, revealIdx int, blink bool, 
 		combined.WriteString(" " + left + strings.Repeat(" ", padding) + gap + right + "\n")
 	}
 
-	// Last GitHub commit — dim line at the bottom
+	// Session info + last GitHub commit — dim lines at the bottom
+	var bottomLines []string
+	if sessionID != "" {
+		mins := connectedSecs / 60
+		secs := connectedSecs % 60
+		metaStyle := r.NewStyle().Foreground(lipgloss.Color("#333333"))
+		sessionStyle := r.NewStyle().Foreground(lipgloss.Color("#2A5A5A"))
+		bottomLines = append(bottomLines, " "+sessionStyle.Render(fmt.Sprintf("session: %s  connected: %02d:%02d", sessionID, mins, secs))+"  "+metaStyle.Render(buildInfo))
+	}
 	if lastCommit != "" {
 		commitStyle := r.NewStyle().Foreground(lipgloss.Color("#444444")).Italic(true)
-		combined.WriteString("\n " + commitStyle.Render("last pushed: "+lastCommit) + "\n")
+		bottomLines = append(bottomLines, " "+commitStyle.Render("last pushed: "+lastCommit))
+	}
+	for _, bl := range bottomLines {
+		combined.WriteString("\n" + bl + "\n")
 	}
 
-	return combined.String()
+	result := combined.String()
+
+	// CRT scanline overlay — a faint horizontal line sweeping down
+	if scanlineY >= 0 {
+		lines := strings.Split(result, "\n")
+		if scanlineY < len(lines) {
+			scanS := r.NewStyle().Foreground(lipgloss.Color("#0A2A2A")).Faint(true)
+			// Overlay the scanline as a dim tinted version of that line
+			visual := stripAnsi(lines[scanlineY])
+			if len(visual) > 0 {
+				lines[scanlineY] = scanS.Render(visual)
+			}
+			result = strings.Join(lines, "\n")
+		}
+	}
+
+	// Idle ambient glitch — one-frame corruption across the whole screen
+	if idleGlitch {
+		glitchChars := []rune{'▓', '░', '▒', '▌', '▐', '╬', '╫', '╪'}
+		lines := strings.Split(result, "\n")
+		glitchS := r.NewStyle().Foreground(lipgloss.Color("#1A1A3A"))
+		for i, line := range lines {
+			visual := []rune(stripAnsi(line))
+			for j := range visual {
+				if visual[j] != ' ' && len(visual) > 0 {
+					// ~8% corruption per non-space char
+					if (i*len(visual)+j)%13 == 0 {
+						visual[j] = glitchChars[(i*7+j*3)%len(glitchChars)]
+					}
+				}
+			}
+			lines[i] = glitchS.Render(string(visual))
+		}
+		result = strings.Join(lines, "\n")
+	}
+
+	return result
 }
 
 // stripAnsi removes ANSI escape codes for width calculation

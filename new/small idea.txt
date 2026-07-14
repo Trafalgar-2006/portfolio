@@ -1,0 +1,498 @@
+You are building Mohith Akshay Duggirala's personal portfolio website from scratch.
+The entire website IS a pixel-perfect simulated macOS desktop. Every section opens
+as a draggable, stackable window with real macOS chrome. This is a UX/design
+portfolio — the interface itself is the design showcase.
+
+Visual reference: https://mohithakshay.framer.website
+Do NOT ask any questions. All content and decisions are in this prompt. Build everything.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IDENTITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Name: Mohith Akshay Duggirala
+Email: d.mohithakshay@gmail.com
+Phone: +91-7386454033
+LinkedIn: linkedin.com/in/dmohithakshay
+GitHub: github.com/trafalgar-2006
+Agency: webcraftstudios.co.in
+Deploy target: mohith.is-a.dev
+Education: B.Tech ECE, Manipal Institute of Technology Bengaluru, Aug 2023 – Jul 2027
+Leadership: President, Manipal Bengaluru Open Source Community (MBOSC) — 200+ members
+Resume PDF: https://github.com/Trafalgar-2006/portfolio/raw/master/Mohith_Akshay_Duggirala_Resume.pdf
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DESKTOP LAYOUT — exact positions
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Background: white/light with subtle CSS dot-grid (#e5e5e5 dots, like graph paper)
+This is a LIGHT MODE macOS desktop — white background, light gray grid.
+
+TOP BAR (macOS menu bar, 28px):
+  Left: Apple logo (🍎) · "Mohith Akshay's Portfolio" (bold) · Contact · Resume
+  Right: system icons (wifi, battery, search, etc.) · "Hello, Welcome Here....!" text
+
+DESKTOP ICONS — exact positions:
+  Top-left:       Sticky note (yellow, always visible, draggable)
+  Bottom-left:    Resume.pdf icon · About Me folder icon
+  Right column (top to bottom):
+    - Project 02 (STR8FIRE)      ← top right
+    - Project 01 (Absolute Mess) ← middle right
+    - Project 03 (SRPS)          ← middle right
+    - Project 04 (Acoustic Classifier) ← lower right
+  Bottom-right:   Don't Look (trash can icon)
+  Center:         "welcome to my\nportfolio." — large serif italic text,
+                  black on white, NOT interactive, just hero typography
+
+DOCK (bottom, centered, macOS-style pill):
+  Finder · Launchpad · Safari · Messages · Mail · Maps · Photos · FaceTime ·
+  Calendar · Contacts · Reminders · Notes · TV · Music · Podcasts · App Store ·
+  System Preferences · Spotify · Files · Trash
+  Use actual macOS app icons (emoji or SVG approximations)
+  Magnification on hover, label tooltip, active dot under open apps
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STICKY NOTE — top-left, always visible, draggable
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Yellow background (#f9f5a0), handwriting-ish font
+Header: "To do:"
+Items:
+  - Land my dream UX job
+  - Drink water
+  - Move to the US          ← strikethrough (done)
+  - Finish grad school without losing my mind
+  - Build that banger spotify playlist
+  - World domination
+  - Get really good at making pasta   ← strikethrough (done)
+  - Travel somewhere new every year
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WINDOW SYSTEM — core reusable component
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Every window has:
+  - Title bar (38px): red · yellow · green traffic lights + title + subtitle
+  - Red = close window entirely
+  - Yellow = minimize (hide)
+  - Green = fullscreen toggle
+  - Draggable by title bar
+  - Click anywhere = bring to front (z-index management)
+  - Open animation: scale(0.95)→(1) + opacity 0→1, Framer Motion
+  - Multiple windows open and stacked simultaneously
+  - Light theme: white/light gray body, dark title bar text
+
+FINDER-STYLE WINDOWS have left sidebar + right content area:
+  Sidebar sections:
+    "Section Header": Work · About Me · Resume · Trash
+    "Projects": Project 01 · Project 02 · Project 03 · Project 04
+  Active item highlighted
+  Each sidebar item opens that window when clicked
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROJECT FOLDER ARCHITECTURE
+Every project opens a Finder-style window with this exact structure:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Each project window has sidebar (same for all) + content area showing 3 items:
+  1. "Full case study.fig"  → folder icon → opens a case study detail window
+  2. "TL;DR.txt"            → document icon → opens a text window with punchy summary
+  3. "[Project].io" or live link → Safari browser icon → opens link in new tab
+
+Window title: "[Project Name] (Project 0X)"
+Window subtitle: "[category/description]"
+
+─────────────────────────────────────
+PROJECT 01 — Absolute Mess
+─────────────────────────────────────
+Window title: Absolute Mess (Project 01)
+Window subtitle: Web Design
+Sidebar: same standard sidebar, Project 01 highlighted
+Files in content:
+  - Full case study.fig  (folder icon)
+  - TL;DR.txt            (document icon)
+  - view-the-mess        (Safari icon → links to live site)
+
+TL;DR.txt content (opens in a sub-window):
+  Title bar: TL;DR.txt
+  Body text:
+  "So... this one's a mess—by design.
+
+  Absolute Mess is a UX exploration where chaos IS the concept.
+  I designed a web experience that leans into disorder—scrambled layouts,
+  unexpected interactions, and visual noise that somehow still guides you
+  through. The challenge: make something feel intentionally broken without
+  actually being broken.
+
+  Every 'mistake' was deliberate. Every confusion had a purpose.
+  If design is usually about clarity, this was about controlled chaos—
+  and making it beautiful anyway."
+
+Full case study.fig content (opens in a sub-window):
+  Case study document with: Overview, Problem, Process, Outcome sections
+  Use placeholder but realistic UX case study content about the project
+
+─────────────────────────────────────
+PROJECT 02 — STR8FIRE
+─────────────────────────────────────
+Window title: Str8Fire (Project 02)
+Window subtitle: blockchain technology and UX-writing
+Sidebar: same standard sidebar, Project 02 highlighted
+Files in content:
+  - Full case study.fig  (folder icon)
+  - TL;DR.txt            (document icon)
+  - STR8FIRE.io          (Safari icon → https://str8fire.io)
+
+TL;DR.txt content (opens in a sub-window) — USE THIS EXACT TEXT:
+  Title bar: TL;DR.txt
+  Body:
+  "So... this one's 🔥—literally.
+
+  At Str8fire, I stepped in as the UX writer to help shape the voice of a
+  platform built for creators who don't play it safe. My job? Make every
+  word hit hard and land clear. From bold CTAs to onboarding flows that
+  don't feel like chores, I crafted copy that keeps up with the energy of
+  the brand—loud, confident, and unmistakably real.
+
+  This was where I got to play with tone—cut the fluff, amp the attitude,
+  and still guide users effortlessly through the experience. Microcopy,
+  tooltips, empty states, even 404s—everything had to sound like Str8fire:
+  sharp, slick, and unapologetically cool."
+
+Full case study.fig content: UX writing case study — voice & tone, copy samples,
+  before/after microcopy, onboarding flow copy, CTA examples
+
+─────────────────────────────────────
+PROJECT 03 — SRPS (College Project)
+─────────────────────────────────────
+Window title: SRPS (Project 03)
+Window subtitle: College Web Design Project
+Sidebar: same standard sidebar, Project 03 highlighted
+
+NOTE: SRPS is a COLLEGE PROJECT — redesigning the SRPS College website.
+This is NOT related to ISRO. Completely separate.
+
+Files in content:
+  - Full case study.fig  (folder icon)
+  - TL;DR.txt            (document icon)
+  - SRPS.edu.in          (Safari icon → links to college site)
+
+TL;DR.txt content — USE THIS EXACT TEXT (from the screenshot):
+  Title bar: TL;DR.txt  (note: screenshot shows this as "aboutme.txt" but
+  content is clearly the SRPS project description — use TL;DR.txt)
+  Body:
+  "So... this one's a smart one.
+
+  I redesigned the website for SRPS College with a focus on clarity,
+  structure, and accessibility. From academics to admissions, everything
+  is now easier to navigate—across all devices.
+
+  Think of it as a clean, modern campus tour—just online. Smooth layout,
+  subtle animations, and a design system that speaks both to students and
+  scholars. If you're into purposeful, polished web design—this is the
+  one to scroll through."
+
+Full case study.fig content: College website redesign case study —
+  before/after, information architecture, accessibility improvements,
+  mobile-first responsive design process
+
+─────────────────────────────────────
+PROJECT 04 — Acoustic Classifier
+─────────────────────────────────────
+Window title: Acoustic Classifier (Project 04)
+Window subtitle: ML · Audio Classification
+Sidebar: same standard sidebar, Project 04 highlighted
+Files in content:
+  - Full case study.fig  (folder icon)
+  - TL;DR.txt            (document icon)
+  - GitHub link          (Safari icon → github.com/trafalgar-2006)
+
+TL;DR.txt content:
+  "So... this one listens.
+
+  I trained a CNN on mel-spectrogram representations of bird audio clips
+  and hit 90%+ classification accuracy across multiple species. The idea?
+  Treat audio like an image. Feed spectrograms into a convolutional net,
+  let it learn the visual patterns of sound.
+
+  TensorFlow, Keras, Librosa. Clean pipeline, real results.
+  Turns out birds are surprisingly easy to tell apart—if you know how
+  to look at what you're hearing."
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ABOUT ME WINDOW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Opens from "About Me" folder icon or sidebar
+Window title: aboutme.txt
+Two sub-windows open simultaneously (as seen in screenshots):
+
+1. IMGlol41.heic window — photo viewer showing Mohith's photo
+   (use a placeholder image div styled as a photo — dark aesthetic anime-style
+   image on left, real photo on right, as seen in screenshot)
+   Title bar: IMGlol41.heic
+
+2. aboutme.txt window — text content:
+   Title bar: aboutme.txt
+   Body — USE THIS EXACT TEXT:
+   "Hi! I'm Mohith, a designer with a sharp eye for detail and a soft spot
+   for bold, human-centered ideas. I craft intuitive products and interfaces
+   that simplify complexity—whether it's streamlining workflows, visualizing
+   data, or making technology feel less... techy.
+
+   Currently pursuing my bachelore's in Electronics and Computer Engineering
+   at MIT, Bengaluru. I thrive at the intersection of strategy, aesthetics,
+   and usability. Whether I'm building seamless experiences or breaking the
+   grid with experimental visuals, my goal is always the same:
+   'make it work beautifully.'"
+
+Also: Spotify now-playing widget appears (top-right area, brown/dark pill):
+   "Gettin' Creative · Mohith Akshay  [Spotify logo]
+    Billie Jean · Michael Jackson
+    [Preview] [⏮] [⏭] [+] [···] [▶]"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FAQ WINDOW — "Mohith's FAQ's"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Window title: (no title bar text shown, just traffic lights)
+Subtitle area: "Mohith's FAQ's, 9:41 AM"
+Style: iMessage-style dark bubble buttons with + expand icon on right
+Some questions have a small red/pink heart notification badge on them
+
+Questions and answers (expand on click, + rotates to ×):
+
+1. "What kind of designer are you?"
+   Answer: "The kind who thinks in systems but feels in aesthetics. I don't
+   just make things look good—I make them work beautifully. Whether it's
+   a 0-to-1 product or a legacy redesign, I'm obsessed with the gap
+   between how something works and how it feels."
+
+2. "What inspires your design style?"
+   Answer: "Dieter Rams in the morning, streetwear drops at night. I love
+   design that has a point of view—opinionated, confident, and still
+   completely functional. Also: good typography, bad movies, and anything
+   that makes me think 'why hasn't anyone done this before?'"
+
+3. "What's your design process like?"  ← has a small emoji/badge on it
+   Answer: "Problem first, pixels last. I start by understanding what's
+   actually broken—user interviews, heuristic audits, competitive analysis.
+   Then I sketch the logic before I open Figma. I iterate fast, test early,
+   and never fall in love with my first idea."
+
+4. "How do you handle creative blocks?"
+   Answer: "I close Figma and go make pasta. Seriously. The best ideas
+   don't come at a desk. I'll go for a walk, change the music, or just
+   stare at something completely unrelated until something clicks.
+   Forcing creativity never works. Stepping away always does."
+
+5. "Favorite kind of project to work on?"  ← has a red heart badge
+   Answer: "Anything that makes something genuinely hard feel effortless.
+   Complex data, AI interfaces, tools that engineers use every day—if the
+   challenge is real and the stakes are high, I'm in. Bonus points if the
+   brief says 'we don't know what this should be yet.'"
+
+6. "What makes you a good collaborator?"
+   Answer: "I can talk to engineers in code and to stakeholders in outcomes.
+   I don't get precious about ideas—if yours is better, let's use it.
+   I ship things that work, not just things that look good in Figma.
+   And I always, always write the documentation."
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TRASH WINDOW — "Don't Look"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Opens from trash can icon bottom-right
+Window title: Trash
+Window subtitle: I said, don't look!
+Sidebar: Section Header: Work · About Me · Resume · Trash (active)
+         Section Header: Project 01 · Project 02 · Project 03 · Project 04
+
+Files in content area (4 items in a grid):
+  1. World Domination Plan.txt   (document icon)
+     Opens sub-window with content:
+     "Step 1: Graduate without losing my mind
+      Step 2: Land that dream job
+      Step 3: Build something people actually use
+      Step 4: ???
+      Step 5: World domination
+      (this document will self-destruct in 5 seconds... just kidding.
+      or am I.)"
+
+  2. breakdown.img   (shows a meme/reaction image — use the crying laughing
+     face meme placeholder, as seen in screenshot — red/funny face image)
+     Opens as a photo viewer sub-window
+
+  3. sorry_no_thanks.pdf   (document icon)
+     Opens sub-window with content:
+     "Dear [Recruiter/Client/Anyone],
+
+      Thank you for reaching out. Unfortunately, I'll be declining
+      your offer to:
+      ☐ 'work for exposure'
+      ☐ 'do a quick unpaid trial project'
+      ☐ 'just make it pop'
+      ☐ 'make the logo bigger'
+      ☐ 'can you just copy [competitor]'
+
+      I wish you all the best in finding someone who will.
+      Warmly,
+      Mohith"
+
+  4. portfolio_2024.com   (Safari browser icon)
+     Clicking shows a sub-window: "404 — This site no longer exists.
+     You weren't supposed to find this."
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SPOTIFY WIDGET
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Floating widget, bottom-right of desktop above dock
+Dark brown/warm dark pill shape (matches screenshots exactly)
+Shows:
+  - Album art (colorful paint/art thumbnail)
+  - Track list:  1. Billie Jean · Micha...
+                 2. E Built For This · L...
+                 3. Left Hand Free · alt...
+                 4. [more...]
+  - "Gettin' Creative · Mohith Akshay" playlist name + Spotify logo
+  - "Preview" label · ⏮ ⏭ + ··· ▶ controls
+Triggered by: Spotify icon in dock OR music note in menu bar
+Can be dismissed/toggled
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PHOTO VIEWER (IMGlol41.heic)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Opens when About Me is opened (or standalone double-click)
+Two photo windows open:
+  LEFT: anime/illustration style image (dark aesthetic, character with headphones)
+  RIGHT: real photo of Mohith (young man laughing, casual, in a room)
+Both as separate draggable windows with title bar "IMGlol41.heic"
+Use placeholder image divs styled appropriately since actual photos aren't available
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WORK WINDOW (Finder-style)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Window title: Work
+Window subtitle: Recent Projects
+Sidebar:
+  "ME BOSS": Work (active) · About Me · Resume · Trash
+  "MY ASS": Project 01 · Project 02 · Project 03 · Project 04
+Content: 2×2 grid of project folders
+  - Project 02 (STR8FIRE)
+  - Project 03 (SRPS)
+  - Project 01 (Absolute Mess)
+  - Project 04 (Acoustics Classifier)
+Double-click any folder → opens that project's window
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EXPERIENCE (accessible from dock or menu)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Window title: Experience
+Vertical timeline:
+
+1. Computer Vision Research Intern — ISRO LEOS (Dec 2025 – Jan 2026)
+   - Synthetic data pipeline (BlenderProc) → 6,000+ annotated images, COCO/RLE
+   - Uniform SO(3) rotations + spherical camera trajectories → 360° coverage
+   - Reduced data generation time by 70% via path-tracing benchmarking
+   - YOLOv7-Seg on NVIDIA Jetson Nano via TensorRT → 22 FPS real-time
+   - Next-gen roadmap: UE5 + NASA SPICE (Max-Q) + GAN domain adaptation
+
+2. Founder & Lead Engineer — Webcraft Studios (Jan 2025 – Present)
+   - Founded agency; clients: Myntra Minis (Flipkart), Str8Fire.io
+   - Full-stack: React, Next.js, Node.js, PostgreSQL, Stripe billing + analytics
+   - Delivery pipeline: Discovery→Design→Dev→Launch→Support; 30% faster cycles
+
+3. Software Engineering Intern — SenseOps Tech (May–Jul 2025)
+   - Rebuilt production website, mobile-first, improved Lighthouse scores
+   - Custom UDP/TCP protocol for distributed vibration sensor network (10+ nodes)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SKILLS WINDOW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Grouped pill tags:
+Languages:  Python · JavaScript · TypeScript · C · C++ · HTML/CSS · SQL · Go
+AI/ML:      PyTorch · TensorFlow · Keras · Scikit-learn · OpenCV · YOLOv7 ·
+            TensorRT · ONNX · BlenderProc · Librosa · LoRA · GGUF
+LLM/NLP:    Transformer Architecture · BPE · RoPE · RMSNorm · SwiGLU ·
+            ONNX Quantisation · Instruction Tuning · Model Evaluation
+Web:        React · Next.js · Node.js · React Native · Tailwind CSS ·
+            MongoDB · PostgreSQL · Firebase · Stripe API · FastAPI
+Tools:      NVIDIA Jetson · Docker · AWS · Vercel · Git · CUDA · Linux ·
+            Figma · Unreal Engine 5
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONTACT WINDOW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Email:    d.mohithakshay@gmail.com
+LinkedIn: linkedin.com/in/dmohithakshay
+GitHub:   github.com/trafalgar-2006
+Agency:   webcraftstudios.co.in
+Phone:    +91-7386454033
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RESUME WINDOW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Small window with Resume.pdf icon + "Open Resume →" button
+Links to: https://github.com/Trafalgar-2006/portfolio/raw/master/Mohith_Akshay_Duggirala_Resume.pdf
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+VISUAL DESIGN — EXACT SPEC
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Theme: LIGHT MODE — white background, NOT dark
+Desktop bg: #ffffff with CSS dot-grid pattern (small gray dots, ~40px spacing)
+Menu bar: white/light gray, thin bottom border
+Window chrome: white background, light gray title bar, rounded-xl corners
+Window shadow: subtle drop shadow
+Traffic lights: exact macOS colors (#ff5f57 red, #febc2e yellow, #28c840 green)
+Hero typography: large black serif italic "portfolio." (Playfair Display or similar)
+  "welcome to my" in smaller regular weight above it
+Sticky note: yellow (#f9f5a0), slightly rotated or flat, handwritten font
+Dock: macOS-style frosted glass pill, exact app icons
+Folder icons: macOS blue gradient folders (exact style as screenshots)
+Body font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif
+All text: black / dark gray on light backgrounds
+Accent: use macOS blue (#007AFF) for active states, selections
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MOBILE (≤768px)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Completely different layout — no desktop simulation on small screens.
+Vertical scroll: Hero → About → Projects (cards) → Experience → Skills → Contact
+Keep the same typography and personality.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TECH STACK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Next.js 14 (App Router)
+- TypeScript
+- Tailwind CSS
+- Framer Motion (window animations, dock magnification)
+- @use-gesture/react (window dragging)
+- Build macOS UI from scratch — no component libraries
+- Deploy: Vercel + custom domain mohith.is-a.dev
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BUILD ORDER — follow exactly
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1.  npx create-next-app@latest mohith-portfolio --typescript --tailwind --app
+2.  npm install framer-motion @use-gesture/react
+3.  globals.css — CSS variables, light theme, dot-grid bg, custom scrollbars
+4.  /data/projects.ts — all 4 project data objects with files, TL;DR content,
+    case study content, links
+5.  /data/experience.ts — 3 experience entries
+6.  /data/skills.ts — all skill categories
+7.  /data/faq.ts — all 6 FAQ questions + answers
+8.  /data/trash.ts — all 4 trash file contents
+9.  /components/Desktop.tsx — full viewport, bg, grid overlay, z-index manager
+10. /components/MenuBar.tsx — exact layout from screenshots
+11. /components/Dock.tsx — magnification, tooltips, app icons
+12. /components/Window.tsx — reusable, draggable, traffic lights, Framer Motion
+13. /components/StickyNote.tsx — draggable yellow note
+14. /components/DesktopIcon.tsx — folder/file icons, double-click opens window
+15. /components/windows/WorkWindow.tsx — Finder + sidebar + project grid
+16. /components/windows/ProjectWindow.tsx — Finder + sidebar + 3 files per project
+17. /components/windows/FileViewerWindow.tsx — opens TL;DR.txt and case study content
+18. /components/windows/AboutWindow.tsx — triggers 2 photo windows + text window
+19. /components/windows/FAQWindow.tsx — iMessage bubbles, accordion expand
+20. /components/windows/TrashWindow.tsx — 4 files, each opens content sub-window
+21. /components/windows/ExperienceWindow.tsx — vertical timeline
+22. /components/windows/SkillsWindow.tsx — grouped pills
+23. /components/windows/ContactWindow.tsx
+24. /components/windows/ResumeWindow.tsx
+25. /components/SpotifyWidget.tsx — floating, toggleable
+26. /components/MobileLayout.tsx — full mobile fallback
+27. /app/page.tsx — global state: openWindows[], focusedWindow, windowPositions
+28. next.config.js + vercel.json
+29. README.md

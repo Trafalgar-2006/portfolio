@@ -139,41 +139,48 @@ func statusStyle(r *lipgloss.Renderer, status string) string {
 	}
 }
 
-func RenderProjects(r *lipgloss.Renderer, width, height, cursor, scroll, projectsReveal, tagPopReveal int, livePulse bool) string {
-	goldStyle        := r.NewStyle().Foreground(lipgloss.Color("#FFD700")).Bold(true)
-	descStyle        := r.NewStyle().Foreground(lipgloss.Color("#E0E0E0"))
-	greenStyle       := r.NewStyle().Foreground(lipgloss.Color("#50FA7B")).Bold(true)
-	cyanStyle        := r.NewStyle().Foreground(lipgloss.Color("#00DFDF"))
-	dimStyle         := r.NewStyle().Foreground(lipgloss.Color("#888888"))
-	orangeStyle      := r.NewStyle().Foreground(lipgloss.Color("#FFB86C"))
-	selectedBorder   := r.NewStyle().Foreground(lipgloss.Color("#00DFDF"))
-	unselectedBorder := r.NewStyle().Foreground(lipgloss.Color("#333333"))
+func RenderProjects(r *lipgloss.Renderer, width, height, cursor, scroll, projectsReveal, tagPopReveal int, livePulse bool, highlightY float64, decryptIdx int, decryptRunes []rune, theme Theme) string {
+	goldStyle        := r.NewStyle().Foreground(lipgloss.Color(theme.Accent)).Bold(true)
+	descStyle        := r.NewStyle().Foreground(lipgloss.Color(theme.Text))
+	greenStyle       := r.NewStyle().Foreground(lipgloss.Color(theme.Success)).Bold(true)
+	cyanStyle        := r.NewStyle().Foreground(lipgloss.Color(theme.Primary))
+	dimStyle         := r.NewStyle().Foreground(lipgloss.Color(theme.Dim))
+	dimMidStyle      := r.NewStyle().Foreground(lipgloss.Color(theme.DimMid))
+	orangeStyle      := r.NewStyle().Foreground(lipgloss.Color(theme.Warning))
+	selectedBg       := r.NewStyle().Foreground(lipgloss.Color(theme.Primary))
+	unselectedBorder := r.NewStyle().Foreground(lipgloss.Color(theme.VeryDim))
+	boxTop           := r.NewStyle().Foreground(lipgloss.Color(theme.BoxBorder))
+	magentaStyle     := r.NewStyle().Foreground(lipgloss.Color(theme.Secondary))
+
+	// Visual cursor row from lerp (rounded)
+	visualCursor := int(highlightY + 0.5)
+	if visualCursor < 0 { visualCursor = 0 }
+	if visualCursor >= len(AllProjects) { visualCursor = len(AllProjects) - 1 }
+
+	contentWidth := width - 8
+	if contentWidth < 50 { contentWidth = 50 }
+	if contentWidth > 90 { contentWidth = 90 }
 
 	var b strings.Builder
 	b.WriteString("\n")
 	b.WriteString(" " + cyanStyle.Bold(true).Render("✦ Projects") + "\n")
-	b.WriteString(" " + dimStyle.Render("Things I've built") + "\n\n")
-
-	contentWidth := width - 8
-	if contentWidth < 50 {
-		contentWidth = 50
-	}
-	if contentWidth > 90 {
-		contentWidth = 90
-	}
+	b.WriteString(" " + dimMidStyle.Render("Things I've built") + "   " + dimStyle.Render("[gg/G jump · Nj/Nk move]") + "\n\n")
 
 	for i, p := range AllProjects {
-		// Cascade: only show up to projectsReveal
 		if i >= projectsReveal {
 			b.WriteString("\n")
 			continue
 		}
 		isSelected := i == cursor
+		isVisualHover := i == visualCursor && visualCursor != cursor
 		num := fmt.Sprintf("%02d", i+1)
 
+		// Selection indicator — uses lerp visual position
 		var prefix string
 		if isSelected {
-			prefix = selectedBorder.Render("▎ ")
+			prefix = selectedBg.Render("▎ ")
+		} else if isVisualHover {
+			prefix = r.NewStyle().Foreground(lipgloss.Color(theme.BoxBorder)).Render("╎ ")
 		} else {
 			prefix = unselectedBorder.Render("  ")
 		}
@@ -181,12 +188,12 @@ func RenderProjects(r *lipgloss.Renderer, width, height, cursor, scroll, project
 		// Title line
 		titleLine := prefix + dimStyle.Render(num+". ") + goldStyle.Render(p.Title)
 
-		// Status badge with [Live] pulse
+		// Status badge
 		if p.Status == "Live" {
 			if livePulse {
-				titleLine += "  " + r.NewStyle().Foreground(lipgloss.Color("#50FA7B")).Bold(true).Render("[Live]")
+				titleLine += "  " + r.NewStyle().Foreground(lipgloss.Color(theme.Success)).Bold(true).Render("[Live]")
 			} else {
-				titleLine += "  " + r.NewStyle().Foreground(lipgloss.Color("#2A7A4A")).Bold(true).Render("[Live]")
+				titleLine += "  " + r.NewStyle().Foreground(lipgloss.Color(theme.Dim)).Bold(true).Render("[Live]")
 			}
 		} else {
 			titleLine += "  " + statusStyle(r, p.Status)
@@ -197,37 +204,85 @@ func RenderProjects(r *lipgloss.Renderer, width, height, cursor, scroll, project
 		b.WriteString(" " + titleLine + "\n")
 
 		if isSelected {
-			desc := wrapText(p.Description, contentWidth-6)
-			for _, line := range strings.Split(desc, "\n") {
-				b.WriteString("     " + descStyle.Render(line) + "\n")
-			}
-			if p.GitHubURL != "" {
-				b.WriteString("     " + orangeStyle.Render("→ "+p.GitHubURL) + "\n")
+			// ╭─ box top border
+			boxWidth := contentWidth + 4
+			b.WriteString("  " + boxTop.Render("╭"+strings.Repeat("─", boxWidth)+"╮") + "\n")
+
+			// Description — decrypt reveal or normal
+			var descText string
+			if len(decryptRunes) > 0 && decryptIdx < len(decryptRunes) {
+				// Blend: resolved chars up to decryptIdx, scrambled after
+				desc := []rune(p.Description)
+				merged := make([]rune, len(desc))
+				for j := range desc {
+					if j < decryptIdx {
+						merged[j] = desc[j]
+					} else if j < len(decryptRunes) {
+						merged[j] = decryptRunes[j]
+					} else {
+						merged[j] = desc[j]
+					}
+				}
+				descText = wrapText(string(merged), contentWidth-2)
 			} else {
-				b.WriteString("     " + dimStyle.Render("→ Private / Institutional repo") + "\n")
+				descText = wrapText(p.Description, contentWidth-2)
+			}
+
+			decryptStyle := r.NewStyle().Foreground(lipgloss.Color("#A0A0A0"))
+			for _, line := range strings.Split(descText, "\n") {
+				b.WriteString("  " + boxTop.Render("│") + " " + decryptStyle.Render(line) + "\n")
+			}
+
+			// GitHub link
+			if p.GitHubURL != "" {
+				b.WriteString("  " + boxTop.Render("│") + " " + orangeStyle.Render("→ "+p.GitHubURL) + "\n")
+			} else {
+				b.WriteString("  " + boxTop.Render("│") + " " + dimStyle.Render("→ Private / Institutional repo") + "\n")
+			}
+
+			// Tags
+			showCount := tagPopReveal
+			if showCount > len(p.Tags) { showCount = len(p.Tags) }
+			var tags []string
+			for _, t := range p.Tags[:showCount] {
+				tagS := r.NewStyle().Foreground(tagColor(t))
+				tags = append(tags, tagS.Render("["+t+"]"))
+			}
+			if len(tags) > 0 {
+				b.WriteString("  " + boxTop.Render("│") + " " + strings.Join(tags, " ") + "\n")
+			}
+
+			// ╰─ box bottom border
+			b.WriteString("  " + boxTop.Render("╰"+strings.Repeat("─", boxWidth)+"╯") + "\n")
+		} else {
+			// Collapsed — show tags inline dimly
+			var tags []string
+			for _, t := range p.Tags {
+				tags = append(tags, dimStyle.Render(t))
+			}
+			if len(tags) > 0 {
+				b.WriteString("     " + dimStyle.Render(strings.Join(tags, " · ")) + "\n")
 			}
 		}
 
-		// Tags — pop in one by one for selected, all at once for others
-		var tags []string
-		showCount := len(p.Tags)
+		// Spacing
 		if isSelected {
-			showCount = tagPopReveal
-			if showCount > len(p.Tags) { showCount = len(p.Tags) }
+			b.WriteString("\n")
+		} else {
+			b.WriteString("\n")
 		}
-		for _, t := range p.Tags[:showCount] {
-			tagS := r.NewStyle().Foreground(tagColor(t))
-			tags = append(tags, tagS.Render("["+t+"]"))
-		}
-		if len(tags) > 0 {
-			b.WriteString("     " + strings.Join(tags, " ") + "\n")
-		}
-		b.WriteString("\n")
 	}
 
-	b.WriteString(" " + dimStyle.Render("[↑↓ browse · enter selects · esc back]") + "\n")
+	// Footer hint
+	hintStyle := r.NewStyle().Foreground(lipgloss.Color("#333333")).Italic(true)
+	b.WriteString(" " + hintStyle.Render("↑↓/jk browse · gg/G jump · Nj/Nk skip N · esc back") + "\n")
+
+	// Status bar
+	_ = magentaStyle
+	_ = descStyle
 	return b.String()
 }
+
 
 func wrapText(text string, maxWidth int) string {
 	if maxWidth <= 0 {
