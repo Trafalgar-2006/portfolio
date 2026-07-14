@@ -95,87 +95,88 @@ func LoadFromConfig() {
 }
 
 
-func tagColor(tag string) lipgloss.Color {
+func tagColor(tag string, theme Theme) lipgloss.Color {
 	langs := map[string]bool{
 		"Python": true, "Go": true, "JavaScript": true, "TypeScript": true,
-		"C++": true, "Rust": true, "SQL": true,
+		"C++": true, "Rust": true, "SQL": true, "HTML": true,
 	}
 	ml := map[string]bool{
-		"PyTorch": true, "TensorFlow": true, "LoRA": true, "GGUF": true,
-		"YOLOv7": true, "TensorRT": true, "OpenCV": true, "CNNs": true,
+		"PyTorch": true, "TensorFlow": true, "LoRA": true, "GGUF": true, "ONNX": true,
+		"YOLOv7": true, "TensorRT": true, "OpenCV": true, "CNNs": true, "GANs": true,
 		"Scikit-learn": true, "Librosa": true, "BlenderProc": true, "CUDA": true,
+		"ResNet": true, "Transformers": true, "NumPy": true, "Pandas": true,
 	}
 	cloud := map[string]bool{
 		"AWS": true, "Firebase": true, "Docker": true, "Railway": true,
 		"Vercel": true, "Oracle Cloud": true, "Fly.io": true, "Alpaca API": true,
+		"Wish": true, "SSH": true,
 	}
 	db := map[string]bool{"MongoDB": true, "PostgreSQL": true, "SQLite": true, "Redis": true}
 
-	if langs[tag] {
-		return lipgloss.Color("#00DFDF") // cyan — languages
-	}
-	if ml[tag] {
-		return lipgloss.Color("#FF6AC1") // magenta — ML/AI
-	}
-	if cloud[tag] {
-		return lipgloss.Color("#50FA7B") // green — cloud/infra
-	}
-	if db[tag] {
-		return lipgloss.Color("#FFB86C") // orange — databases
-	}
-	return lipgloss.Color("#BD93F9") // purple — frameworks/other
+	if langs[tag] { return theme.Primary }
+	if ml[tag]    { return theme.Secondary }
+	if cloud[tag] { return theme.Success }
+	if db[tag]    { return theme.Warning }
+	return theme.Purple
 }
 
-func statusStyle(r *lipgloss.Renderer, status string) string {
+func statusDot(status string, theme Theme) string {
+	switch status {
+	case "Live":     return string(theme.Success)
+	case "WIP":      return string(theme.Warning)
+	case "Research": return string(theme.Purple)
+	default:         return string(theme.Dim)
+	}
+}
+
+func statusBadge(r *lipgloss.Renderer, status string, theme Theme) string {
 	switch status {
 	case "Live":
-		return r.NewStyle().Foreground(lipgloss.Color("#50FA7B")).Bold(true).Render("[Live]")
+		return r.NewStyle().Foreground(theme.Success).Bold(true).Render("[Live]")
 	case "WIP":
-		return r.NewStyle().Foreground(lipgloss.Color("#FFB86C")).Bold(true).Render("[WIP]")
+		return r.NewStyle().Foreground(theme.Warning).Bold(true).Render("[WIP]")
 	case "Research":
-		return r.NewStyle().Foreground(lipgloss.Color("#BD93F9")).Bold(true).Render("[Research]")
+		return r.NewStyle().Foreground(theme.Purple).Bold(true).Render("[Research]")
 	default:
 		return ""
 	}
 }
 
 func RenderProjects(r *lipgloss.Renderer, width, height, cursor, scroll, projectsReveal, tagPopReveal int, livePulse bool, highlightY float64, decryptIdx int, decryptRunes []rune, theme Theme) string {
-	goldStyle        := r.NewStyle().Foreground(lipgloss.Color(theme.Accent)).Bold(true)
-	cyanStyle        := r.NewStyle().Foreground(lipgloss.Color(theme.Primary))
-	dimStyle         := r.NewStyle().Foreground(lipgloss.Color(theme.Dim))
-	dimMidStyle      := r.NewStyle().Foreground(lipgloss.Color(theme.DimMid))
-	orangeStyle      := r.NewStyle().Foreground(lipgloss.Color(theme.Warning))
-	greenStyle       := r.NewStyle().Foreground(lipgloss.Color(theme.Success)).Bold(true)
-	selectedBg       := r.NewStyle().Background(lipgloss.Color(theme.BoxBorder)).Foreground(lipgloss.Color(theme.Primary)).Bold(true)
-	unselectedStyle  := r.NewStyle().Foreground(lipgloss.Color(theme.DimMid))
-	boxStyle         := r.NewStyle().Foreground(lipgloss.Color(theme.BoxBorder))
-	decryptStyle     := r.NewStyle().Foreground(lipgloss.Color(theme.Text))
-	hintStyle        := r.NewStyle().Foreground(lipgloss.Color(theme.VeryDim)).Italic(true)
+	goldStyle       := r.NewStyle().Foreground(theme.Accent).Bold(true)
+	cyanStyle       := r.NewStyle().Foreground(theme.Primary)
+	dimStyle        := r.NewStyle().Foreground(theme.Dim)
+	dimMidStyle     := r.NewStyle().Foreground(theme.DimMid)
+	orangeStyle     := r.NewStyle().Foreground(theme.Warning)
+	greenStyle      := r.NewStyle().Foreground(theme.Success).Bold(true)
+	selectedBg      := r.NewStyle().Background(theme.BoxBorder).Foreground(theme.Primary).Bold(true)
+	unselectedStyle := r.NewStyle().Foreground(theme.DimMid)
+	boxStyle        := r.NewStyle().Foreground(theme.BoxBorder)
+	decryptStyle    := r.NewStyle().Foreground(theme.Text)
+	hintStyle       := r.NewStyle().Foreground(theme.VeryDim).Italic(true)
 
 	// Visual cursor row from lerp (rounded)
 	visualCursor := int(highlightY + 0.5)
-	if visualCursor < 0 { visualCursor = 0 }
-	if visualCursor >= len(AllProjects) { visualCursor = len(AllProjects) - 1 }
+	if visualCursor < 0                  { visualCursor = 0 }
+	if visualCursor >= len(AllProjects)  { visualCursor = len(AllProjects) - 1 }
 
-	// ── Layout math ──────────────────────────────────────────────────────
+	// ── Layout math ───────────────────────────────────────────────
 	totalW  := width - 4
-	leftW   := 32 // fixed list panel width
+	leftW   := 32
 	dividerW := 1
 	rightW  := totalW - leftW - dividerW - 2
 	if rightW < 30 { rightW = 30 }
 
 	p := AllProjects[cursor]
 
-	// ── LEFT PANEL — project list ─────────────────────────────────────────
+	// ── LEFT PANEL — project list ──────────────────────────────────
 	var left strings.Builder
 	left.WriteString(cyanStyle.Bold(true).Render(" ✦ Projects") + "\n")
-	left.WriteString(dimStyle.Render(" " + fmt.Sprintf("%d projects", len(AllProjects))) + "\n")
-	left.WriteString(boxStyle.Render(" " + strings.Repeat("─", leftW-2)) + "\n")
+	left.WriteString(dimStyle.Render(" "+fmt.Sprintf("%d projects", len(AllProjects))) + "\n")
+	left.WriteString(boxStyle.Render(" "+strings.Repeat("─", leftW-2)) + "\n")
 
 	for i, proj := range AllProjects {
-		// Radar-sweep cascade: only show lines that have been "revealed"
 		if i >= projectsReveal {
-			// Show radar scan line at the next-to-reveal row
 			if i == projectsReveal {
 				scanChar := []string{"▶", "▷", " "}[(projectsReveal/2)%3]
 				left.WriteString(dimStyle.Render(" "+scanChar) + "\n")
@@ -187,21 +188,22 @@ func RenderProjects(r *lipgloss.Renderer, width, height, cursor, scroll, project
 
 		isSelected := i == cursor
 		isHover    := i == visualCursor && visualCursor != cursor
-		num := fmt.Sprintf("%d", i+1)
+		num        := fmt.Sprintf("%d", i+1)
 
-		var line string
 		title := proj.Title
-		// Truncate to fit left panel
 		maxTitleW := leftW - 5
 		if len([]rune(title)) > maxTitleW {
 			runes := []rune(title)
 			title = string(runes[:maxTitleW-1]) + "…"
 		}
 
+		var line string
 		if isSelected {
-			line = selectedBg.Render(" " + num + " " + title + strings.Repeat(" ", leftW-len(num)-len([]rune(title))-3))
+			padding := leftW - len(num) - len([]rune(title)) - 3
+			if padding < 0 { padding = 0 }
+			line = selectedBg.Render(" "+num+" "+title+strings.Repeat(" ", padding))
 		} else if isHover {
-			line = r.NewStyle().Foreground(lipgloss.Color(theme.Primary)).Render(" "+num+" ") + dimMidStyle.Render(title)
+			line = r.NewStyle().Foreground(theme.Primary).Render(" "+num+" ") + dimMidStyle.Render(title)
 		} else {
 			line = unselectedStyle.Render(" "+num+" ") + dimStyle.Render(title)
 		}
@@ -210,48 +212,54 @@ func RenderProjects(r *lipgloss.Renderer, width, height, cursor, scroll, project
 		var dot string
 		switch proj.Status {
 		case "Live":
-			if livePulse {
-				dot = r.NewStyle().Foreground(lipgloss.Color(theme.Success)).Render("●")
-			} else {
-				dot = dimStyle.Render("○")
-			}
+			if livePulse { dot = r.NewStyle().Foreground(theme.Success).Render("●") } else { dot = dimStyle.Render("○") }
 		case "WIP":
-			dot = r.NewStyle().Foreground(lipgloss.Color(theme.Warning)).Render("◐")
+			dot = r.NewStyle().Foreground(theme.Warning).Render("◐")
 		case "Research":
-			dot = r.NewStyle().Foreground(lipgloss.Color(theme.Purple)).Render("◇")
+			dot = r.NewStyle().Foreground(theme.Purple).Render("◇")
 		default:
 			dot = " "
 		}
 		left.WriteString(line + dot + "\n")
 	}
 
-	left.WriteString(boxStyle.Render(" " + strings.Repeat("─", leftW-2)) + "\n")
-	left.WriteString(hintStyle.Render(" jk/↑↓ gg G Nj") + "\n")
+	left.WriteString(boxStyle.Render(" "+strings.Repeat("─", leftW-2)) + "\n")
+	left.WriteString(hintStyle.Render(" jk/↑↓  gg G  Nj  t theme") + "\n")
 
-	// ── RIGHT PANEL — selected project detail ─────────────────────────────
-	var right strings.Builder
+	// ── RIGHT PANEL — selected project detail with box border ──────
+	var rightLines []string
 
-	// Title + status
+	// Box top
+	boxTop    := boxStyle.Render("╭"+strings.Repeat("─", rightW-2)+"╮")
+	boxBottom := boxStyle.Render("╰"+strings.Repeat("─", rightW-2)+"╯")
+	borderL   := boxStyle.Render("│")
+
+	// Title + status badge
 	titleLine := goldStyle.Render(p.Title)
 	if p.Status == "Live" {
 		if livePulse {
-			titleLine += "  " + greenStyle.Render("[● Live]")
+			titleLine += "  " + greenStyle.Render("● Live")
 		} else {
-			titleLine += "  " + dimStyle.Render("[○ Live]")
+			titleLine += "  " + dimStyle.Render("○ Live")
 		}
 	} else {
-		titleLine += "  " + statusStyle(r, p.Status)
+		titleLine += "  " + statusBadge(r, p.Status, theme)
 	}
 	if p.Highlight != "" {
-		titleLine += "\n" + greenStyle.Render("  ⚡ "+p.Highlight)
+		titleLine += "  " + greenStyle.Render("⚡ "+p.Highlight)
 	}
-	right.WriteString(wrapText(titleLine, rightW) + "\n")
-	right.WriteString(boxStyle.Render(strings.Repeat("─", rightW)) + "\n\n")
+
+	rightLines = append(rightLines, boxTop)
+	for _, line := range strings.Split(wrapText(titleLine, rightW-4), "\n") {
+		rightLines = append(rightLines, borderL+" "+line)
+	}
+	rightLines = append(rightLines, borderL+" "+boxStyle.Render(strings.Repeat("─", rightW-4)))
+	rightLines = append(rightLines, borderL)
 
 	// Description — decrypt reveal
 	var descText string
 	if len(decryptRunes) > 0 && decryptIdx < len(decryptRunes) {
-		desc := []rune(p.Description)
+		desc   := []rune(p.Description)
 		merged := make([]rune, len(desc))
 		for j := range desc {
 			if j < decryptIdx {
@@ -262,53 +270,52 @@ func RenderProjects(r *lipgloss.Renderer, width, height, cursor, scroll, project
 				merged[j] = desc[j]
 			}
 		}
-		descText = wrapText(string(merged), rightW-2)
+		descText = wrapText(string(merged), rightW-4)
 	} else {
-		descText = wrapText(p.Description, rightW-2)
+		descText = wrapText(p.Description, rightW-4)
 	}
 	for _, line := range strings.Split(descText, "\n") {
-		right.WriteString(decryptStyle.Render(line) + "\n")
+		rightLines = append(rightLines, borderL+" "+decryptStyle.Render(line))
 	}
-	right.WriteString("\n")
+	rightLines = append(rightLines, borderL)
 
-	// GitHub / source
-	right.WriteString(boxStyle.Render(strings.Repeat("─", rightW)) + "\n")
+	// GitHub link
+	rightLines = append(rightLines, borderL+" "+boxStyle.Render(strings.Repeat("─", rightW-4)))
 	if p.GitHubURL != "" {
-		right.WriteString(orangeStyle.Render("→ " + p.GitHubURL) + "\n")
+		rightLines = append(rightLines, borderL+" "+orangeStyle.Render("→ "+p.GitHubURL))
 	} else {
-		right.WriteString(dimStyle.Render("→ Private / Institutional repo") + "\n")
+		rightLines = append(rightLines, borderL+" "+dimStyle.Render("→ Private / Institutional repo"))
 	}
 
-	// Tags — pop in with tagPopReveal
+	// Tags — pop in
 	showCount := tagPopReveal
 	if showCount > len(p.Tags) { showCount = len(p.Tags) }
 	var tagParts []string
 	for _, t := range p.Tags[:showCount] {
-		tagS := r.NewStyle().Foreground(tagColor(t))
+		tagS := r.NewStyle().Foreground(tagColor(t, theme))
 		tagParts = append(tagParts, tagS.Render("["+t+"]"))
 	}
 	if len(tagParts) > 0 {
-		right.WriteString(strings.Join(tagParts, " ") + "\n")
+		rightLines = append(rightLines, borderL+" "+strings.Join(tagParts, " "))
 	}
 
-	// All other projects — brief list at bottom of detail pane
-	right.WriteString("\n" + boxStyle.Render(strings.Repeat("─", rightW)) + "\n")
-	right.WriteString(dimStyle.Render("other projects") + "\n")
+	// Other projects list
+	rightLines = append(rightLines, borderL)
+	rightLines = append(rightLines, borderL+" "+boxStyle.Render(strings.Repeat("─", rightW-4)))
+	rightLines = append(rightLines, borderL+" "+dimStyle.Render("other projects"))
 	for i, op := range AllProjects {
-		if i == cursor { continue }
-		if i >= projectsReveal { continue }
+		if i == cursor || i >= projectsReveal { continue }
 		dot := dimStyle.Render("·")
-		right.WriteString(dot + " " + dimStyle.Render(fmt.Sprintf("%02d", i+1)+". ") + dimMidStyle.Render(op.Title) + "\n")
+		rightLines = append(rightLines, borderL+" "+dot+" "+dimStyle.Render(fmt.Sprintf("%02d", i+1)+". ")+dimMidStyle.Render(op.Title))
 	}
+	rightLines = append(rightLines, boxBottom)
 
-	// ── COMBINE — zip left and right lines side by side ───────────────────
-	leftLines  := strings.Split(left.String(),  "\n")
-	rightLines := strings.Split(right.String(), "\n")
+	// ── COMBINE — zip left and right lines side by side ────────────
+	leftLines := strings.Split(left.String(), "\n")
 
-	// Pad to same length
 	maxLines := len(leftLines)
 	if len(rightLines) > maxLines { maxLines = len(rightLines) }
-	for len(leftLines)  < maxLines { leftLines  = append(leftLines,  "") }
+	for len(leftLines)  < maxLines { leftLines  = append(leftLines, "") }
 	for len(rightLines) < maxLines { rightLines = append(rightLines, "") }
 
 	sep := boxStyle.Render("│")
@@ -318,15 +325,12 @@ func RenderProjects(r *lipgloss.Renderer, width, height, cursor, scroll, project
 		lLine := leftLines[i]
 		rLine := rightLines[i]
 
-		// Pad left line to leftW
 		lVis := len([]rune(stripAnsi(lLine)))
 		if lVis < leftW {
 			lLine += strings.Repeat(" ", leftW-lVis)
 		}
-
-		out.WriteString(" " + lLine + " " + sep + " " + rLine + "\n")
+		out.WriteString(" "+lLine+" "+sep+" "+rLine+"\n")
 	}
-
 	return out.String()
 }
 

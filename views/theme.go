@@ -3,38 +3,38 @@ package views
 import "github.com/charmbracelet/lipgloss"
 
 // Theme holds all color tokens for the portfolio.
-// All render functions receive a *Theme so every screen reacts to theme switches.
+// All render functions receive a Theme so every screen reacts to theme switches.
 type Theme struct {
 	Name string
 
 	// Core palette
-	Primary   lipgloss.Color // main accent (cyan in Dracula, green in Matrix…)
-	Secondary lipgloss.Color // second accent (magenta, etc.)
+	Primary   lipgloss.Color // main accent
+	Secondary lipgloss.Color // second accent
 	Accent    lipgloss.Color // gold/highlight
-	Success   lipgloss.Color // green / positive
-	Warning   lipgloss.Color // orange / WIP
-	Purple    lipgloss.Color // purple / framework tags
+	Success   lipgloss.Color // positive / live indicator
+	Warning   lipgloss.Color // orange / WIP indicator
+	Purple    lipgloss.Color // framework / tag color
 
 	// Text levels
 	Text    lipgloss.Color // bright readable text
-	DimMid  lipgloss.Color // medium dim (#888)
-	Dim     lipgloss.Color // darkest readable (#555)
-	VeryDim lipgloss.Color // nearly invisible (#333)
+	DimMid  lipgloss.Color // medium dim
+	Dim     lipgloss.Color // darkest readable dim
+	VeryDim lipgloss.Color // nearly invisible metadata
 
 	// UI chrome
 	BoxBorder  lipgloss.Color // box drawing lines
 	FooterBg   lipgloss.Color // footer bar background
-	FooterText lipgloss.Color // footer bar text
-	TabActive  lipgloss.Color // active tab bg
+	FooterText lipgloss.Color // footer bar muted text
+	TabActive  lipgloss.Color // active tab highlight bg
 
-	// Matrix-specific
-	MatrixHead   lipgloss.Color
-	MatrixBright lipgloss.Color
-	MatrixMid    lipgloss.Color
-	MatrixDim    lipgloss.Color
-	MatrixLocked lipgloss.Color // name crystallisation colour
+	// Matrix rain colors
+	MatrixHead   lipgloss.Color // column head (brightest)
+	MatrixBright lipgloss.Color // bright trail
+	MatrixMid    lipgloss.Color // mid trail
+	MatrixDim    lipgloss.Color // dim trail
+	MatrixLocked lipgloss.Color // crystallised name color
 
-	// Star colours
+	// Star twinkle
 	StarBright lipgloss.Color
 	StarDim    lipgloss.Color
 
@@ -43,7 +43,7 @@ type Theme struct {
 }
 
 // ──────────────────────────────────────────────────────────────
-// Theme presets
+// Theme registry — [t] cycles through these in order
 // ──────────────────────────────────────────────────────────────
 
 var Themes = []Theme{
@@ -51,128 +51,174 @@ var Themes = []Theme{
 	ThemeMatrix,
 	ThemeAmber,
 	ThemeNord,
+	ThemeCyberpunk,
 }
 
-// ThemeDracula — the original. Cyan + magenta on deep dark.
+// ──────────────────────────────────────────────────────────────
+// DRACULA — rich purple-dark with vivid cyan + hot pink
+// The classic. Deep contrast, saturated accents.
+// ──────────────────────────────────────────────────────────────
 var ThemeDracula = Theme{
 	Name:      "dracula",
-	Primary:   "#00DFDF",
-	Secondary: "#FF6AC1",
-	Accent:    "#FFD700",
-	Success:   "#50FA7B",
-	Warning:   "#FFB86C",
-	Purple:    "#BD93F9",
+	Primary:   "#8BE9FD", // dracula cyan — bright and clean
+	Secondary: "#FF79C6", // dracula pink — vivid hot pink
+	Accent:    "#F1FA8C", // dracula yellow — warm highlight
+	Success:   "#50FA7B", // dracula green — electric
+	Warning:   "#FFB86C", // dracula orange
+	Purple:    "#BD93F9", // dracula purple
 
-	Text:    "#E0E0E0",
-	DimMid:  "#888888",
-	Dim:     "#555555",
-	VeryDim: "#333333",
+	Text:    "#F8F8F2", // dracula foreground — near-white
+	DimMid:  "#6272A4", // dracula comment blue — readable dim
+	Dim:     "#44475A", // dracula selection — dark dim
+	VeryDim: "#282A36", // dracula background — near invisible
 
-	BoxBorder:  "#1A4040",
-	FooterBg:   "#0A1A1A",
-	FooterText: "#1A5050",
-	TabActive:  "#00DFDF",
+	BoxBorder:  "#6272A4",
+	FooterBg:   "#21222C",
+	FooterText: "#44475A",
+	TabActive:  "#8BE9FD",
 
 	MatrixHead:   "#FFFFFF",
-	MatrixBright: "#00FF41",
-	MatrixMid:    "#00AA00",
-	MatrixDim:    "#004400",
-	MatrixLocked: "#00DFDF",
+	MatrixBright: "#50FA7B",
+	MatrixMid:    "#00CC55",
+	MatrixDim:    "#004422",
+	MatrixLocked: "#8BE9FD",
 
-	StarBright:    "#00DFDF",
-	StarDim:       "#444444",
-	ScanlineColor: "#0A2A2A",
+	StarBright:    "#F1FA8C",
+	StarDim:       "#44475A",
+	ScanlineColor: "#191A21",
 }
 
-// ThemeMatrix — pure green-on-black hacker. No distractions.
+// ──────────────────────────────────────────────────────────────
+// MATRIX — pure green-on-black. No colour. No compromise.
+// ──────────────────────────────────────────────────────────────
 var ThemeMatrix = Theme{
 	Name:      "matrix",
-	Primary:   "#00FF41",
-	Secondary: "#00CC33",
-	Accent:    "#00FF41",
+	Primary:   "#00FF41", // the iconic matrix green
+	Secondary: "#00DD33", // slightly dimmer green
+	Accent:    "#AAFFAA", // near-white green for highlights
 	Success:   "#00FF41",
-	Warning:   "#88FF44",
-	Purple:    "#00BB33",
+	Warning:   "#99FF33", // yellow-green for WIP
+	Purple:    "#00BB22", // darker green for variety
 
-	Text:    "#00DD33",
-	DimMid:  "#007722",
+	Text:    "#CCFFCC", // light green text
+	DimMid:  "#008822",
 	Dim:     "#004411",
-	VeryDim: "#002208",
+	VeryDim: "#001A08",
 
-	BoxBorder:  "#003310",
-	FooterBg:   "#000A00",
-	FooterText: "#005522",
+	BoxBorder:  "#006622",
+	FooterBg:   "#000C00",
+	FooterText: "#003311",
 	TabActive:  "#00FF41",
 
-	MatrixHead:   "#FFFFFF",
+	MatrixHead:   "#FFFFFF", // pure white column head
 	MatrixBright: "#00FF41",
 	MatrixMid:    "#00AA00",
 	MatrixDim:    "#003300",
-	MatrixLocked: "#AAFFAA",
+	MatrixLocked: "#FFFFFF", // name crystallises in white
 
 	StarBright:    "#00FF41",
 	StarDim:       "#003311",
-	ScanlineColor: "#001100",
+	ScanlineColor: "#000E00",
 }
 
-// ThemeAmber — warm retro CRT. Phosphor amber glow on near-black.
+// ──────────────────────────────────────────────────────────────
+// AMBER — phosphor CRT. 1970s terminal energy.
+// Everything amber. Nothing else exists.
+// ──────────────────────────────────────────────────────────────
 var ThemeAmber = Theme{
 	Name:      "amber",
-	Primary:   "#FFB300",
-	Secondary: "#FF8C00",
-	Accent:    "#FFD54F",
-	Success:   "#CDDC39",
-	Warning:   "#FF6F00",
-	Purple:    "#FFA040",
+	Primary:   "#FFAA00", // classic amber phosphor
+	Secondary: "#FF7700", // deeper orange
+	Accent:    "#FFE066", // bright highlight amber
+	Success:   "#CCFF00", // yellow-green for Live status
+	Warning:   "#FF5500", // burnt orange for WIP
+	Purple:    "#FF9944", // orange-gold for tags
 
-	Text:    "#FFE082",
-	DimMid:  "#8B6914",
-	Dim:     "#4A3800",
-	VeryDim: "#2A2000",
+	Text:    "#FFD080", // warm amber text
+	DimMid:  "#AA6600",
+	Dim:     "#664400",
+	VeryDim: "#2A1C00",
 
-	BoxBorder:  "#3A2800",
-	FooterBg:   "#0A0800",
-	FooterText: "#5A3A00",
-	TabActive:  "#FFB300",
+	BoxBorder:  "#885500",
+	FooterBg:   "#0A0600",
+	FooterText: "#663300",
+	TabActive:  "#FFAA00",
 
-	MatrixHead:   "#FFFF88",
-	MatrixBright: "#FFB300",
-	MatrixMid:    "#996600",
-	MatrixDim:    "#442200",
-	MatrixLocked: "#FFD700",
+	MatrixHead:   "#FFEEAA", // warm white head
+	MatrixBright: "#FFAA00",
+	MatrixMid:    "#AA6600",
+	MatrixDim:    "#441E00",
+	MatrixLocked: "#FFE066",
 
-	StarBright:    "#FFD700",
-	StarDim:       "#4A3000",
-	ScanlineColor: "#1A0E00",
+	StarBright:    "#FFE066",
+	StarDim:       "#553300",
+	ScanlineColor: "#140A00",
 }
 
-// ThemeNord — cool arctic palette. Blues and muted cyans.
+// ──────────────────────────────────────────────────────────────
+// NORD — true Arctic palette. Icy blues, sage greens.
+// Based on the official Nord color specification.
+// ──────────────────────────────────────────────────────────────
 var ThemeNord = Theme{
 	Name:      "nord",
-	Primary:   "#88C0D0",
-	Secondary: "#B48EAD",
-	Accent:    "#EBCB8B",
-	Success:   "#A3BE8C",
-	Warning:   "#D08770",
-	Purple:    "#B48EAD",
+	Primary:   "#88C0D0", // Nord8 — frost blue (the signature color)
+	Secondary: "#B48EAD", // Nord15 — muted purple
+	Accent:    "#EBCB8B", // Nord13 — aurora yellow
+	Success:   "#A3BE8C", // Nord14 — aurora green
+	Warning:   "#D08770", // Nord12 — aurora orange
+	Purple:    "#81A1C1", // Nord9 — frost blue-grey
 
-	Text:    "#D8DEE9",
-	DimMid:  "#6C7A8A",
-	Dim:     "#3B4252",
-	VeryDim: "#2E3440",
+	Text:    "#ECEFF4", // Nord6 — snow storm white
+	DimMid:  "#7A8899",
+	Dim:     "#4C566A", // Nord3 — polar night light
+	VeryDim: "#2E3440", // Nord0 — polar night deep
 
-	BoxBorder:  "#2E4060",
-	FooterBg:   "#1A2030",
-	FooterText: "#3C6080",
+	BoxBorder:  "#5E81AC", // Nord10 — frost blue dark
+	FooterBg:   "#242933",
+	FooterText: "#3B4252",
 	TabActive:  "#88C0D0",
 
 	MatrixHead:   "#ECEFF4",
 	MatrixBright: "#88C0D0",
 	MatrixMid:    "#5E81AC",
 	MatrixDim:    "#2E3440",
-	MatrixLocked: "#88C0D0",
+	MatrixLocked: "#EBCB8B",
 
-	StarBright:    "#88C0D0",
-	StarDim:       "#2E3440",
-	ScanlineColor: "#1A2030",
+	StarBright:    "#EBCB8B",
+	StarDim:       "#3B4252",
+	ScanlineColor: "#1E2430",
+}
+
+// ──────────────────────────────────────────────────────────────
+// CYBERPUNK — neon pink + electric blue on deep purple-black.
+// Press [t] until you reach this. You've earned it.
+// ──────────────────────────────────────────────────────────────
+var ThemeCyberpunk = Theme{
+	Name:      "cyberpunk",
+	Primary:   "#FF007F", // electric hot pink
+	Secondary: "#00FFFF", // electric cyan
+	Accent:    "#FFE600", // neon yellow
+	Success:   "#00FF88", // neon green
+	Warning:   "#FF6600", // neon orange
+	Purple:    "#CC00FF", // neon purple
+
+	Text:    "#FFFFFF",
+	DimMid:  "#AA44AA",
+	Dim:     "#550055",
+	VeryDim: "#22001A",
+
+	BoxBorder:  "#880055",
+	FooterBg:   "#0A000A",
+	FooterText: "#440033",
+	TabActive:  "#FF007F",
+
+	MatrixHead:   "#FFFFFF",
+	MatrixBright: "#FF007F",
+	MatrixMid:    "#AA0055",
+	MatrixDim:    "#330011",
+	MatrixLocked: "#00FFFF",
+
+	StarBright:    "#FFE600",
+	StarDim:       "#440033",
+	ScanlineColor: "#0E000A",
 }
