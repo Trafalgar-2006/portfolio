@@ -20,6 +20,7 @@ func RenderAlert(r *lipgloss.Renderer, width, height, phase int, theme Theme) st
 		if width < boxW+4 {
 			boxW = width - 4
 		}
+		if boxW < 20 { boxW = 20 } // guard: prevent negative inner on tiny terminals
 		inner := boxW - 2 // chars between the two border pipes
 
 		// Horizontal centering: pad so box sits in the middle of the terminal

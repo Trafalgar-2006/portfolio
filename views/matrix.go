@@ -51,7 +51,11 @@ func TickMatrixColumns(cols []MatrixColumn, height int) []MatrixColumn {
 			cols[i].Chars[j] = matrixAlphabet[rand.Intn(len(matrixAlphabet))]
 			// Reset if fully off-screen
 			if cols[i].Head-cols[i].Trail > height {
-				cols[i].Head = -rand.Intn(height / 2)
+				resetRange := height / 2 // guard: rand.Intn panics on n<=0 (tiny/zero terminal height)
+				if resetRange < 1 {
+					resetRange = 1
+				}
+				cols[i].Head = -rand.Intn(resetRange)
 				cols[i].Trail = 5 + rand.Intn(12)
 				cols[i].Speed = 1 + rand.Intn(3)
 			}
