@@ -1309,44 +1309,54 @@
     }
 
     // ═══ PROJECTS DATA ═══
+    // Mirrors content.yaml (the SSH TUI source of truth) — keep in sync.
     const PROJECTS = [
       {
-        title: 'EmbedGen — Domain-Specific Code LLM', status: 'wip', label: 'WIP',
-        hl: '62M params · outperforms CodeLLaMA-7B (80× larger)',
-        desc: 'Designed and trained a 62M-parameter decoder-only transformer from scratch — Llama-lite architecture with RMSNorm, RoPE, and SwiGLU, trained entirely on embedded systems code (STM32 HAL, Arduino, ESP32, FreeRTOS). Built the full data pipeline: custom GitHub/Arduino scrapers, BPE tokenizer (32k vocab), MinHash LSH dedup, 500k-pair instruction dataset. Created EmbedEval — a domain benchmark of 50 problems across 10 embedded categories. Deployed via ONNX + FP16 on a FastAPI inference server with a VS Code extension for C/C++ ghost-text autocomplete.',
-        tags: ['Python', 'PyTorch', 'ONNX', 'FastAPI', 'TypeScript'], github: 'github.com/trafalgar-2006/EmbedGen'
+        title: 'EmbedGen — Domain-Specific Code LLM', status: 'wip', label: 'WIP', hl: '',
+        desc: 'Built a 62M-parameter transformer from scratch trained on embedded-systems C/C++ codebases. Custom BPE tokeniser (32k vocab), MiniHash LSH deduplication, multi-head attention with RoPE + RMSNorm. Quantized to ONNX FP16 for edge deployment. EmbedGen outperforms CodeLLaMA-7B (80x larger) on EmbedEval — a domain-specific benchmark across 10 embedded categories (GPIO, UART, DMA, FreeRTOS, SPI, ADC, Timers, Interrupts). Ships as a VS Code extension with C/C++ autocomplete.',
+        tags: ['Python', 'PyTorch', 'ONNX', 'CUDA', 'Transformers', 'FastAPI'], github: 'github.com/trafalgar-2006/EmbedGen'
+      },
+      {
+        title: 'SAR2EO — Satellite Image Translation', status: 'wip', label: 'WIP', hl: '',
+        desc: 'Deep learning pipeline that translates Synthetic Aperture Radar (SAR) satellite imagery to Electro-Optical (EO) visible-light images using conditional GANs and diffusion-based domain adaptation. Trained on paired SAR/EO datasets, enabling all-weather all-time satellite reconnaissance from radar-only feeds. Built on top of ISRO LEOS research experience.',
+        tags: ['Python', 'PyTorch', 'GANs', 'OpenCV', 'NumPy'], github: 'github.com/trafalgar-2006/sar2eo'
       },
       {
         title: 'ISRO LEOS — Sim-to-Real Vision', status: 'research', label: 'Research',
-        hl: '⚡ 22 FPS on Jetson',
-        desc: 'Full synthetic-to-real perception pipeline for ISRO satellite target detection. Generated 6,000+ photo-realistic annotated images in BlenderProc. Deployed YOLOv7+Segmentation via TensorRT on NVIDIA Jetson. GAN-based domain adaptation (UE5 + NASA SPICE) to close the sim-to-real gap.',
+        hl: '22 FPS on Jetson',
+        desc: 'Built a full synthetic-to-real perception pipeline for ISRO\'s Low Earth Orbit Satellite lab. Generated 6,000+ photo-realistic satellite images in BlenderProc with automated COCO/YOLO annotations. Implemented SOG2 rotations with spherical camera trajectories for 360° angular coverage. Reduced data generation time 70% by benchmarking path-scaling parameters. Deployed YOLOv7 on NVIDIA Jetson Xavier via TensorRT @ 22 FPS. Built GAN-based domain adaptation to close the sim-to-real gap.',
         tags: ['BlenderProc', 'YOLOv7', 'TensorRT', 'Python', 'OpenCV'], github: ''
       },
       {
         title: 'Autonomous Trading System', status: 'live', label: 'Live', hl: '',
-        desc: 'End-to-end AI swing-trading agent for the US equity market. Multi-factor ML model (momentum + sentiment + technicals), Alpaca API execution with position sizing and stop-loss. Every decision logged to SQLite. Runs 24/7 on Oracle Cloud Always Free — zero hosting cost.',
-        tags: ['Python', 'SQLite', 'Alpaca API', 'Oracle Cloud', 'Pandas'], github: 'github.com/trafalgar-2006/trading-agent'
+        desc: 'End-to-end AI swing-trading agent that generates signals across the entire US equity market. Runs a multi-factor ML model (momentum + sentiment + technicals), executes paper trades via Alpaca API with position sizing and stop-loss logic, and logs every decision to SQLite for post-hoc analysis. Runs 24/7 on Oracle Cloud Always Free — zero hosting cost.',
+        tags: ['Python', 'SQLite', 'Alpaca API', 'Oracle Cloud', 'Pandas'], github: 'github.com/trafalgar-2006/autonomous-trading-agent'
+      },
+      {
+        title: 'Zycus — Procurement Intelligence Agent', status: 'wip', label: 'WIP', hl: '',
+        desc: 'AI-powered procurement analytics and automation agent. Processes supplier data, contract terms, and spend analytics to surface actionable insights and automate repetitive procurement workflows. Built in Python with an agentic pipeline for document parsing, classification, and reporting.',
+        tags: ['Python', 'AI', 'Pandas', 'FastAPI'], github: 'github.com/trafalgar-2006/zycus'
       },
       {
         title: 'Webcraft Studios — Digital Agency', status: 'live', label: 'Live', hl: '',
-        desc: 'Founded and run a boutique digital agency. 12+ production websites with custom CMS and SEO pipelines. Clients include Myntra Minis (Flipkart ecosystem) and Str8Fire.io. AI-assisted content workflows, analytics dashboards, and client onboarding — solo.',
-        tags: ['React', 'Node.js', 'MongoDB', 'AWS', 'Python'], github: ''
+        desc: 'Founded and built a boutique digital agency serving clients across India and the UAE. Engineered full-stack platforms using React, Node.js, MongoDB and Stripe. Scaled to multiple international SaaS clients within the first year. Built a customer-first delivery pipeline (Discovery → Design → Dev → Launch → Support) cutting delivery cycle time by 30%+. Revenue-generating since 2025.',
+        tags: ['React', 'Node.js', 'MongoDB', 'AWS', 'Python', 'Stripe'], github: ''
       },
       {
         title: 'Bird Sound Species Detector', status: 'research', label: 'Research',
-        hl: '⚡ 90%+ accuracy',
-        desc: 'CNN classifier identifying bird species from raw field audio. Converts MP3 recordings to mel-spectrograms, trains ResNet-18 on a curated multi-species dataset, outputs species predictions with confidence. Built for ornithologists doing field surveys without internet.',
-        tags: ['Python', 'TensorFlow', 'ResNet', 'Librosa'], github: ''
+        hl: '90%+ accuracy',
+        desc: 'CNN classifier that identifies bird species from raw field audio. Converts MP3 recordings to mel-spectrograms, trains a ResNet-18 on a curated multi-species dataset, outputs species predictions with confidence scores. Built as a field tool for ornithologists doing surveys without internet access.',
+        tags: ['Python', 'TensorFlow', 'ResNet', 'Librosa', 'CNNs'], github: ''
       },
       {
-        title: 'Frog Call Classifier', status: 'research', label: 'Research', hl: '',
-        desc: 'Audio ML pipeline for automated frog species identification across 803 species. Noise reduction, bandpass filtering, and MFCC feature extraction on environmental recordings, matched against a reference database. For biodiversity researchers processing hundreds of hours of field audio.',
-        tags: ['Python', 'Librosa', 'Scikit-learn', 'NumPy'], github: ''
+        title: 'BioAcoustic Frog Classifier', status: 'research', label: 'Research', hl: '',
+        desc: 'Audio ML pipeline for automated frog species identification across 803 species. Applies noise reduction, bandpass filtering, and MFCC feature extraction on environmental recordings, then matches peak frequencies against a reference database. Designed for biodiversity researchers processing hundreds of hours of field audio.',
+        tags: ['Python', 'Librosa', 'Scikit-learn', 'NumPy'], github: 'github.com/trafalgar-2006/BioAcoustic-Frog-Classifier'
       },
       {
         title: 'SSH Portfolio (this one)', status: 'live', label: 'Live', hl: '',
-        desc: 'Interactive TUI portfolio served over raw SSH — no browser, no JavaScript, no loading spinner. Go + Bubbletea + Wish. Matrix rain intro, fake SSH handshake boot sequence, typewriter animations, live GitHub commit feed, tab transitions. Deployed on Railway with persistent host key.',
-        tags: ['Go', 'Bubbletea', 'Docker', 'Railway', 'Wish'], github: 'github.com/trafalgar-2006/portfolio'
+        desc: 'An interactive TUI portfolio served over raw SSH — no browser, no JavaScript. Built in Go with Bubbletea and Wish. Matrix rain intro, fake boot sequence, 4 colour themes, split-pane projects view, live visitor counter, jittering ping display, decrypt-reveal animations, vim motions, and smooth lerp transitions. You\'re looking at it right now.',
+        tags: ['Go', 'Bubbletea', 'Docker', 'Wish', 'SSH'], github: 'github.com/trafalgar-2006/portfolio'
       },
     ];
 
