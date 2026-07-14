@@ -141,146 +141,193 @@ func statusStyle(r *lipgloss.Renderer, status string) string {
 
 func RenderProjects(r *lipgloss.Renderer, width, height, cursor, scroll, projectsReveal, tagPopReveal int, livePulse bool, highlightY float64, decryptIdx int, decryptRunes []rune, theme Theme) string {
 	goldStyle        := r.NewStyle().Foreground(lipgloss.Color(theme.Accent)).Bold(true)
-	descStyle        := r.NewStyle().Foreground(lipgloss.Color(theme.Text))
-	greenStyle       := r.NewStyle().Foreground(lipgloss.Color(theme.Success)).Bold(true)
 	cyanStyle        := r.NewStyle().Foreground(lipgloss.Color(theme.Primary))
 	dimStyle         := r.NewStyle().Foreground(lipgloss.Color(theme.Dim))
 	dimMidStyle      := r.NewStyle().Foreground(lipgloss.Color(theme.DimMid))
 	orangeStyle      := r.NewStyle().Foreground(lipgloss.Color(theme.Warning))
-	selectedBg       := r.NewStyle().Foreground(lipgloss.Color(theme.Primary))
-	unselectedBorder := r.NewStyle().Foreground(lipgloss.Color(theme.VeryDim))
-	boxTop           := r.NewStyle().Foreground(lipgloss.Color(theme.BoxBorder))
-	magentaStyle     := r.NewStyle().Foreground(lipgloss.Color(theme.Secondary))
+	greenStyle       := r.NewStyle().Foreground(lipgloss.Color(theme.Success)).Bold(true)
+	selectedBg       := r.NewStyle().Background(lipgloss.Color(theme.BoxBorder)).Foreground(lipgloss.Color(theme.Primary)).Bold(true)
+	unselectedStyle  := r.NewStyle().Foreground(lipgloss.Color(theme.DimMid))
+	boxStyle         := r.NewStyle().Foreground(lipgloss.Color(theme.BoxBorder))
+	decryptStyle     := r.NewStyle().Foreground(lipgloss.Color(theme.Text))
+	hintStyle        := r.NewStyle().Foreground(lipgloss.Color(theme.VeryDim)).Italic(true)
 
 	// Visual cursor row from lerp (rounded)
 	visualCursor := int(highlightY + 0.5)
 	if visualCursor < 0 { visualCursor = 0 }
 	if visualCursor >= len(AllProjects) { visualCursor = len(AllProjects) - 1 }
 
-	contentWidth := width - 8
-	if contentWidth < 50 { contentWidth = 50 }
-	if contentWidth > 90 { contentWidth = 90 }
+	// ── Layout math ──────────────────────────────────────────────────────
+	totalW  := width - 4
+	leftW   := 32 // fixed list panel width
+	dividerW := 1
+	rightW  := totalW - leftW - dividerW - 2
+	if rightW < 30 { rightW = 30 }
 
-	var b strings.Builder
-	b.WriteString("\n")
-	b.WriteString(" " + cyanStyle.Bold(true).Render("✦ Projects") + "\n")
-	b.WriteString(" " + dimMidStyle.Render("Things I've built") + "   " + dimStyle.Render("[gg/G jump · Nj/Nk move]") + "\n\n")
+	p := AllProjects[cursor]
 
-	for i, p := range AllProjects {
+	// ── LEFT PANEL — project list ─────────────────────────────────────────
+	var left strings.Builder
+	left.WriteString(cyanStyle.Bold(true).Render(" ✦ Projects") + "\n")
+	left.WriteString(dimStyle.Render(" " + fmt.Sprintf("%d projects", len(AllProjects))) + "\n")
+	left.WriteString(boxStyle.Render(" " + strings.Repeat("─", leftW-2)) + "\n")
+
+	for i, proj := range AllProjects {
+		// Radar-sweep cascade: only show lines that have been "revealed"
 		if i >= projectsReveal {
-			b.WriteString("\n")
+			// Show radar scan line at the next-to-reveal row
+			if i == projectsReveal {
+				scanChar := []string{"▶", "▷", " "}[(projectsReveal/2)%3]
+				left.WriteString(dimStyle.Render(" "+scanChar) + "\n")
+			} else {
+				left.WriteString("\n")
+			}
 			continue
 		}
+
 		isSelected := i == cursor
-		isVisualHover := i == visualCursor && visualCursor != cursor
-		num := fmt.Sprintf("%02d", i+1)
+		isHover    := i == visualCursor && visualCursor != cursor
+		num := fmt.Sprintf("%d", i+1)
 
-		// Selection indicator — uses lerp visual position
-		var prefix string
-		if isSelected {
-			prefix = selectedBg.Render("▎ ")
-		} else if isVisualHover {
-			prefix = r.NewStyle().Foreground(lipgloss.Color(theme.BoxBorder)).Render("╎ ")
-		} else {
-			prefix = unselectedBorder.Render("  ")
+		var line string
+		title := proj.Title
+		// Truncate to fit left panel
+		maxTitleW := leftW - 5
+		if len([]rune(title)) > maxTitleW {
+			runes := []rune(title)
+			title = string(runes[:maxTitleW-1]) + "…"
 		}
 
-		// Title line
-		titleLine := prefix + dimStyle.Render(num+". ") + goldStyle.Render(p.Title)
+		if isSelected {
+			line = selectedBg.Render(" " + num + " " + title + strings.Repeat(" ", leftW-len(num)-len([]rune(title))-3))
+		} else if isHover {
+			line = r.NewStyle().Foreground(lipgloss.Color(theme.Primary)).Render(" "+num+" ") + dimMidStyle.Render(title)
+		} else {
+			line = unselectedStyle.Render(" "+num+" ") + dimStyle.Render(title)
+		}
 
-		// Status badge
-		if p.Status == "Live" {
+		// Status dot
+		var dot string
+		switch proj.Status {
+		case "Live":
 			if livePulse {
-				titleLine += "  " + r.NewStyle().Foreground(lipgloss.Color(theme.Success)).Bold(true).Render("[Live]")
+				dot = r.NewStyle().Foreground(lipgloss.Color(theme.Success)).Render("●")
 			} else {
-				titleLine += "  " + r.NewStyle().Foreground(lipgloss.Color(theme.Dim)).Bold(true).Render("[Live]")
+				dot = dimStyle.Render("○")
 			}
-		} else {
-			titleLine += "  " + statusStyle(r, p.Status)
+		case "WIP":
+			dot = r.NewStyle().Foreground(lipgloss.Color(theme.Warning)).Render("◐")
+		case "Research":
+			dot = r.NewStyle().Foreground(lipgloss.Color(theme.Purple)).Render("◇")
+		default:
+			dot = " "
 		}
-		if p.Highlight != "" {
-			titleLine += "  " + greenStyle.Render("⚡ "+p.Highlight)
-		}
-		b.WriteString(" " + titleLine + "\n")
-
-		if isSelected {
-			// ╭─ box top border
-			boxWidth := contentWidth + 4
-			b.WriteString("  " + boxTop.Render("╭"+strings.Repeat("─", boxWidth)+"╮") + "\n")
-
-			// Description — decrypt reveal or normal
-			var descText string
-			if len(decryptRunes) > 0 && decryptIdx < len(decryptRunes) {
-				// Blend: resolved chars up to decryptIdx, scrambled after
-				desc := []rune(p.Description)
-				merged := make([]rune, len(desc))
-				for j := range desc {
-					if j < decryptIdx {
-						merged[j] = desc[j]
-					} else if j < len(decryptRunes) {
-						merged[j] = decryptRunes[j]
-					} else {
-						merged[j] = desc[j]
-					}
-				}
-				descText = wrapText(string(merged), contentWidth-2)
-			} else {
-				descText = wrapText(p.Description, contentWidth-2)
-			}
-
-			decryptStyle := r.NewStyle().Foreground(lipgloss.Color("#A0A0A0"))
-			for _, line := range strings.Split(descText, "\n") {
-				b.WriteString("  " + boxTop.Render("│") + " " + decryptStyle.Render(line) + "\n")
-			}
-
-			// GitHub link
-			if p.GitHubURL != "" {
-				b.WriteString("  " + boxTop.Render("│") + " " + orangeStyle.Render("→ "+p.GitHubURL) + "\n")
-			} else {
-				b.WriteString("  " + boxTop.Render("│") + " " + dimStyle.Render("→ Private / Institutional repo") + "\n")
-			}
-
-			// Tags
-			showCount := tagPopReveal
-			if showCount > len(p.Tags) { showCount = len(p.Tags) }
-			var tags []string
-			for _, t := range p.Tags[:showCount] {
-				tagS := r.NewStyle().Foreground(tagColor(t))
-				tags = append(tags, tagS.Render("["+t+"]"))
-			}
-			if len(tags) > 0 {
-				b.WriteString("  " + boxTop.Render("│") + " " + strings.Join(tags, " ") + "\n")
-			}
-
-			// ╰─ box bottom border
-			b.WriteString("  " + boxTop.Render("╰"+strings.Repeat("─", boxWidth)+"╯") + "\n")
-		} else {
-			// Collapsed — show tags inline dimly
-			var tags []string
-			for _, t := range p.Tags {
-				tags = append(tags, dimStyle.Render(t))
-			}
-			if len(tags) > 0 {
-				b.WriteString("     " + dimStyle.Render(strings.Join(tags, " · ")) + "\n")
-			}
-		}
-
-		// Spacing
-		if isSelected {
-			b.WriteString("\n")
-		} else {
-			b.WriteString("\n")
-		}
+		left.WriteString(line + dot + "\n")
 	}
 
-	// Footer hint
-	hintStyle := r.NewStyle().Foreground(lipgloss.Color("#333333")).Italic(true)
-	b.WriteString(" " + hintStyle.Render("↑↓/jk browse · gg/G jump · Nj/Nk skip N · esc back") + "\n")
+	left.WriteString(boxStyle.Render(" " + strings.Repeat("─", leftW-2)) + "\n")
+	left.WriteString(hintStyle.Render(" jk/↑↓ gg G Nj") + "\n")
 
-	// Status bar
-	_ = magentaStyle
-	_ = descStyle
-	return b.String()
+	// ── RIGHT PANEL — selected project detail ─────────────────────────────
+	var right strings.Builder
+
+	// Title + status
+	titleLine := goldStyle.Render(p.Title)
+	if p.Status == "Live" {
+		if livePulse {
+			titleLine += "  " + greenStyle.Render("[● Live]")
+		} else {
+			titleLine += "  " + dimStyle.Render("[○ Live]")
+		}
+	} else {
+		titleLine += "  " + statusStyle(r, p.Status)
+	}
+	if p.Highlight != "" {
+		titleLine += "\n" + greenStyle.Render("  ⚡ "+p.Highlight)
+	}
+	right.WriteString(wrapText(titleLine, rightW) + "\n")
+	right.WriteString(boxStyle.Render(strings.Repeat("─", rightW)) + "\n\n")
+
+	// Description — decrypt reveal
+	var descText string
+	if len(decryptRunes) > 0 && decryptIdx < len(decryptRunes) {
+		desc := []rune(p.Description)
+		merged := make([]rune, len(desc))
+		for j := range desc {
+			if j < decryptIdx {
+				merged[j] = desc[j]
+			} else if j < len(decryptRunes) {
+				merged[j] = decryptRunes[j]
+			} else {
+				merged[j] = desc[j]
+			}
+		}
+		descText = wrapText(string(merged), rightW-2)
+	} else {
+		descText = wrapText(p.Description, rightW-2)
+	}
+	for _, line := range strings.Split(descText, "\n") {
+		right.WriteString(decryptStyle.Render(line) + "\n")
+	}
+	right.WriteString("\n")
+
+	// GitHub / source
+	right.WriteString(boxStyle.Render(strings.Repeat("─", rightW)) + "\n")
+	if p.GitHubURL != "" {
+		right.WriteString(orangeStyle.Render("→ " + p.GitHubURL) + "\n")
+	} else {
+		right.WriteString(dimStyle.Render("→ Private / Institutional repo") + "\n")
+	}
+
+	// Tags — pop in with tagPopReveal
+	showCount := tagPopReveal
+	if showCount > len(p.Tags) { showCount = len(p.Tags) }
+	var tagParts []string
+	for _, t := range p.Tags[:showCount] {
+		tagS := r.NewStyle().Foreground(tagColor(t))
+		tagParts = append(tagParts, tagS.Render("["+t+"]"))
+	}
+	if len(tagParts) > 0 {
+		right.WriteString(strings.Join(tagParts, " ") + "\n")
+	}
+
+	// All other projects — brief list at bottom of detail pane
+	right.WriteString("\n" + boxStyle.Render(strings.Repeat("─", rightW)) + "\n")
+	right.WriteString(dimStyle.Render("other projects") + "\n")
+	for i, op := range AllProjects {
+		if i == cursor { continue }
+		if i >= projectsReveal { continue }
+		dot := dimStyle.Render("·")
+		right.WriteString(dot + " " + dimStyle.Render(fmt.Sprintf("%02d", i+1)+". ") + dimMidStyle.Render(op.Title) + "\n")
+	}
+
+	// ── COMBINE — zip left and right lines side by side ───────────────────
+	leftLines  := strings.Split(left.String(),  "\n")
+	rightLines := strings.Split(right.String(), "\n")
+
+	// Pad to same length
+	maxLines := len(leftLines)
+	if len(rightLines) > maxLines { maxLines = len(rightLines) }
+	for len(leftLines)  < maxLines { leftLines  = append(leftLines,  "") }
+	for len(rightLines) < maxLines { rightLines = append(rightLines, "") }
+
+	sep := boxStyle.Render("│")
+	var out strings.Builder
+	out.WriteString("\n")
+	for i := range leftLines {
+		lLine := leftLines[i]
+		rLine := rightLines[i]
+
+		// Pad left line to leftW
+		lVis := len([]rune(stripAnsi(lLine)))
+		if lVis < leftW {
+			lLine += strings.Repeat(" ", leftW-lVis)
+		}
+
+		out.WriteString(" " + lLine + " " + sep + " " + rLine + "\n")
+	}
+
+	return out.String()
 }
 
 

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -23,6 +24,9 @@ import (
 	"github.com/trafalgar-2006/ssh-portfolio/views"
 	gossh "golang.org/x/crypto/ssh"
 )
+
+// visitorCount tracks concurrent active SSH sessions (atomic, safe for concurrent access)
+var visitorCount atomic.Int64
 
 //go:embed index.html
 var indexHTML embed.FS
@@ -138,9 +142,23 @@ func runSSHServer() {
 	}
 }
 
+// visitorMsg carries the current visitor count to the model
+type visitorMsg int64
+
 func teaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
 	renderer := bubbletea.MakeRenderer(s)
+
+	// Increment on connect, decrement when the session ends
+	visitorCount.Add(1)
+	count := visitorCount.Load()
+	go func() {
+		<-s.Context().Done()
+		visitorCount.Add(-1)
+	}()
+
 	m := NewModel(renderer)
+	m.visitorCount = count
+
 	return m, []tea.ProgramOption{
 		tea.WithAltScreen(),
 		tea.WithMouseCellMotion(),

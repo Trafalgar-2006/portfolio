@@ -130,6 +130,11 @@ type Model struct {
 	// Vim number prefix buffer (e.g. "3" before j)
 	numBuf string
 
+	// Visitor counter + network ping display
+	visitorCount int64
+	pingMs       int // fake jittering ping in ms
+	pingJitter   int // countdown until next ping update
+
 	// Contacts
 	contactsReveal int
 	sshFlash       int
@@ -185,6 +190,8 @@ func NewModel(r *lipgloss.Renderer) Model {
 		sessionStart: time.Now(),
 		stars:        stars,
 		scanlineY:    -1,
+		pingMs:       12 + rand.Intn(9),
+		pingJitter:   8,
 	}
 }
 
@@ -482,6 +489,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.themeFlash--
 		}
 
+		// ── Ping jitter (simulated latency display) ─────────────────
+		m.pingJitter--
+		if m.pingJitter <= 0 {
+			delta := rand.Intn(7) - 3 // -3..+3 ms random walk
+			m.pingMs += delta
+			if m.pingMs < 4  { m.pingMs = 4  }
+			if m.pingMs > 80 { m.pingMs = 80 }
+			m.pingJitter = 6 + rand.Intn(10)
+		}
+
 		// ── Live pulse (always, every 10 ticks = 500ms) ───────────
 		if m.tickCount%10 == 0 {
 			m.livePulse = !m.livePulse
@@ -673,9 +690,23 @@ func (m Model) renderFooterBar() string {
 	sid := m.sessionID
 	if sid == "" { sid = "--------" }
 
+	// Ping color: green <20ms, yellow 20-40ms, orange >40ms
+	pingColor := theme.Success
+	if m.pingMs > 40 { pingColor = theme.Warning }
+	if m.pingMs > 60 { pingColor = "#FF5555" }
+	pingS := r.NewStyle().Foreground(lipgloss.Color(pingColor)).Background(lipgloss.Color(theme.FooterBg))
+
+	visitorStr := ""
+	if m.visitorCount > 0 {
+		visitorStr = fmt.Sprintf("  ·  ") + barBg.Render(fmt.Sprintf("👥 %d online", m.visitorCount))
+	}
+
 	bar := sidStyle.Render("  "+sid) +
 		sepStyle.Render("  ·  ") +
 		barBg.Render(fmt.Sprintf("connected: %02d:%02d", mins, s)) +
+		sepStyle.Render("  ·  ") +
+		pingS.Render(fmt.Sprintf("ping: %dms", m.pingMs)) +
+		visitorStr +
 		sepStyle.Render("  ·  ") +
 		barBg.Render(viewName) +
 		sepStyle.Render("  ·  ") +
